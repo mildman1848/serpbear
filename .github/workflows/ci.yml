@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  test:
+    name: Test Container
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
+          docker compose version
+
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          failure-threshold: warning
+          ignore: DL3007,DL3018,DL3013
+
+      - name: Create required directories
+        run: |
+          mkdir -p config data logs secrets
+          mkdir -p data/database data/uploads data/cache
+
+      - name: Generate CI secrets
+        run: make secrets-generate-ci
+
+      - name: Test docker-compose configuration
+        run: |
+          IMAGE_TAG=test docker compose config --quiet
+
+      - name: Build and test container
+        run: |
+          IMAGE_TAG=test docker compose up -d --build --wait
+          IMAGE_TAG=test docker compose ps
+          IMAGE_TAG=test docker compose logs
+          IMAGE_TAG=test docker compose down

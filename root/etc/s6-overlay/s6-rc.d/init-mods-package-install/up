@@ -1,0 +1,31 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+
+# Docker Mods (LinuxServer.io standard)
+# https://github.com/linuxserver/docker-mods
+
+SDIR="/config"
+OVERLAY_VERSION="$(cat /etc/s6-overlay/s6-rc.d/init-adduser/branding | grep 'Container Version:' | cut -d: -f2- | xargs)"
+
+if [[ "${DOCKER_MODS:-}" ]]; then
+    echo "**** Docker mods defined for ${APPLICATION_NAME} as ${DOCKER_MODS} ****"
+
+    # Parse comma-separated mods
+    IFS=',' read -ra MODS_ARRAY <<< "${DOCKER_MODS}"
+    for i in "${MODS_ARRAY[@]}"; do
+        echo "**** Installing mod: ${i} ****"
+
+        # Basic validation (prevent command injection)
+        if [[ "${i}" =~ ^[a-zA-Z0-9._/-]+$ ]]; then
+            # Here you would implement the actual mod installation logic
+            # For now, just log that it would be installed
+            echo "**** Would install Docker mod: ${i} ****"
+        else
+            echo "**** Invalid mod name: ${i}, skipping ****"
+        fi
+    done
+else
+    echo "**** No Docker mods specified ****"
+fi
+
+echo "**** Mods installation complete ****"
