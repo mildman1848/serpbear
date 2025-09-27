@@ -11,18 +11,18 @@
   Enhanced Security & Docker Secrets Implementation
 
   Version: 2.0.7-1
-  Built: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
-  Source: https://github.com/${GITHUB_USERNAME}/serpbear
+  Built: 2025-09-27 11:08:18 UTC
+  Source: https://github.com/mildman1848/serpbear
 
   Based on LinuxServer.io Alpine + S6 Overlay v3
-  Licensed under ${LICENSE_TYPE}
+  Licensed under MIT License
 
   Original Project: https://github.com/towfiqi/serpbear
-  Original License: ${UPSTREAM_LICENSE}
-  Original Docs: ${UPSTREAM_DOCS}
+  Original License: MIT License
+  Original Docs: https://github.com/towfiqi/serpbear#readme
 ══════════════════════════════════════════════════════════════════════════════════════════
 
 To support the original serpbear project:
-${UPSTREAM_SUPPORT}
+https://github.com/towfiqi/serpbear/issues
 
 ══════════════════════════════════════════════════════════════════════════════════════════

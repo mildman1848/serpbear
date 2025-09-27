@@ -2,6 +2,7 @@
 
 🇩🇪 **Deutsche Version:** [README.de.md](README.de.md)
 
+![Version](https://img.shields.io/badge/dynamic/json-blue?label=version&query=$.version&url=https://raw.githubusercontent.com/mildman1848/serpbear/main/VERSION)
 ## Overview
 
 This Docker image provides **serpbear** (v2.0.7) on the LinuxServer.io Alpine baseimage with S6 Overlay v3, enhanced security, and modern best practices.
@@ -19,7 +20,7 @@ This Docker image provides **serpbear** (v2.0.7) on the LinuxServer.io Alpine ba
 
 ```bash
 # 1. Clone repository and setup environment
-git clone https://github.com/${GITHUB_USERNAME}/serpbear.git
+git clone https://github.com/mildman1848/serpbear.git
 cd serpbear
 make setup
 
@@ -47,7 +48,7 @@ docker run -d \
   -e PGID=1000 \
   -e TZ=Europe/Berlin \
   --restart unless-stopped \
-  ${DOCKER_USERNAME}/serpbear:latest
+  mildman1848/serpbear:latest
 ```
 
 ## Configuration
@@ -130,19 +131,19 @@ make validate-manifest       # Validate OCI compliance
 This container packages the excellent **serpbear** project:
 
 - **Original Repository:** [towfiqi/serpbear](https://github.com/towfiqi/serpbear)
-- **License:** ${UPSTREAM_LICENSE}
-- **Documentation:** [${UPSTREAM_DOCS}](${UPSTREAM_DOCS})
-- **Support:** [${UPSTREAM_SUPPORT}](${UPSTREAM_SUPPORT})
+- **License:** MIT License
+- **Documentation:** [SerpBear Documentation](https://github.com/towfiqi/serpbear#readme)
+- **Support:** [SerpBear Issues](https://github.com/towfiqi/serpbear/issues)
 
 ## Support & Documentation
 
 - 📚 **LinuxServer.io Docs:** [LINUXSERVER.md](docs/LINUXSERVER.md)
 - 🔒 **Security Policy:** [SECURITY.md](SECURITY.md)
-- 🐛 **Issues:** [GitHub Issues](https://github.com/${GITHUB_USERNAME}/serpbear/issues)
-- 💬 **Discussions:** [GitHub Discussions](https://github.com/${GITHUB_USERNAME}/serpbear/discussions)
+- 🐛 **Issues:** [GitHub Issues](https://github.com/mildman1848/serpbear/issues)
+- 💬 **Discussions:** [GitHub Discussions](https://github.com/mildman1848/serpbear/discussions)
 
 ## License
 
-This project is licensed under the ${LICENSE_TYPE} License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-The original **serpbear** software is licensed under ${UPSTREAM_LICENSE} - see the [original repository](https://github.com/towfiqi/serpbear) for details.
+The original **serpbear** software is licensed under MIT License - see the [original repository](https://github.com/towfiqi/serpbear) for details.

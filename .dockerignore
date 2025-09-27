@@ -1,0 +1,145 @@
+# ---------------------------------------------------------------------------
+# Standard .dockerignore for LinuxServer.io based Docker Projects
+# Template Version: 2.4.0
+# ---------------------------------------------------------------------------
+
+# Development
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+test-data/
+test-volumes/
+coverage/
+.nyc_output/
+
+# Build context optimization
+.git/
+.gitignore
+README.md
+README.de.md
+CHANGELOG.md
+LICENSE
+*.md
+
+# Runtime directories (exclude from build context)
+config/
+data/
+logs/
+db/
+secrets/
+
+# Environment files
+.env*
+!.env.example
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+Jenkinsfile
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Security and secrets
+*.key
+*.pem
+*.p12
+*.pfx
+*_rsa
+*_rsa.pub
+.ssh/
+credentials/
+
+# Build artifacts
+dist/
+build/
+out/
+
+# Archives
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.rar
+*.7z
+
+# Language specific
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Security reports
+security-reports/
+trivy-results.sarif
+*.sarif
+
+# Baseimage testing
+BASEIMAGE_UPDATE_REPORT.md
+baseimage-test-*.log
+baseimage-test-*.json
+
+# CodeQL analysis
+codeql-db/
+codeql-results.csv
+
+# Backup files
+*.backup
+*.bak
+
+# Application specific (customize for your application)
+# Add your application-specific ignore patterns below this line
+
+# ---------------------------------------------------------------------------
+# End of standard .dockerignore
+# Project-specific additions should be added below
+# ---------------------------------------------------------------------------

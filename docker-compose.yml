@@ -6,17 +6,7 @@ services:
     hostname: serpbear
     restart: unless-stopped
 
-    # Security hardening (basic)
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - DAC_OVERRIDE
-      - FOWNER
-      - SETGID
-      - SETUID
+    # Basic security (enhanced security in docker-compose.override.yml)
 
     # Network configuration
     ports:
@@ -43,11 +33,11 @@ services:
 
       # Optional: FILE__ prefix secrets support
       - FILE__SERPBEAR_CONFIG_PASS=/run/secrets/serpbear_config_pass
-      - FILE__SERPBEAR_PASSWORD
       - FILE__SERPBEAR_API_KEY=/run/secrets/serpbear_api_key
 
-      # Additional application configuration
-      ${ADDITIONAL_ENVIRONMENT_VARIABLES}
+      # Serpbear specific environment variables
+      - DATABASE_URL=file:/app/data/database/serpbear.db
+      - NEXTAUTH_URL=http://localhost:3000
 
     # Volume mounts
     volumes:

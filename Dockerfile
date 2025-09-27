@@ -1,5 +1,9 @@
 # syntax=docker/dockerfile:1
 
+# Build arguments for source image
+ARG SOURCE_IMAGE="towfiqi/serpbear"
+ARG SOURCE_VERSION="2.0.7"
+
 # Build stage for serpbear
 FROM ${SOURCE_IMAGE}:${SOURCE_VERSION} AS serpbear
 
@@ -19,11 +23,17 @@ LABEL org.opencontainers.image.description="Open Source Search Engine Position T
 LABEL org.opencontainers.image.version="${VERSION}"
 LABEL org.opencontainers.image.created="${BUILD_DATE}"
 LABEL org.opencontainers.image.authors="Mildman1848"
-LABEL org.opencontainers.image.url="${APPLICATION_URL}"
-LABEL org.opencontainers.image.documentation="${APPLICATION_DOCS_URL}"
+LABEL org.opencontainers.image.url="https://serpbear.com"
+LABEL org.opencontainers.image.documentation="https://docs.serpbear.com"
 LABEL org.opencontainers.image.source="https://github.com/Mildman1848/serpbear"
 LABEL org.opencontainers.image.vendor="Mildman1848"
 LABEL org.opencontainers.image.licenses="MIT"
+
+# Build arguments for package versions
+ARG CA_CERTIFICATES_VERSION="20250619-r0"
+ARG CURL_VERSION="8.14.1-r1"
+ARG UNZIP_VERSION="6.0-r15"
+ARG NODEJS_VERSION="22.16.0-r2"
 
 # Environment variables for serpbear
 ENV SERPBEAR_CONFIG="/config/serpbear/serpbear.conf" \
@@ -39,8 +49,8 @@ RUN \
   apk add --no-cache \
     ca-certificates=${CA_CERTIFICATES_VERSION} \
     curl=${CURL_VERSION} \
-    # Add application-specific packages here
-    # Example: fuse3=${FUSE3_VERSION} \
+    nodejs=${NODEJS_VERSION} \
+    npm \
     unzip=${UNZIP_VERSION} && \
   echo "**** install serpbear ****" && \
   mkdir -p /app && \
@@ -50,8 +60,8 @@ RUN \
     /var/cache/apk/* \
     /var/tmp/*
 
-# Copy application binary from official image or download
-COPY --from=serpbear ${SOURCE_BINARY_PATH} ${TARGET_BINARY_PATH}
+# Copy application from official image
+COPY --from=serpbear /app /app/
 
 # Copy local files and set permissions
 COPY root/ /
@@ -65,7 +75,7 @@ EXPOSE 3000
 
 # Health check for serpbear
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD ${HEALTH_CHECK_CMD} || exit 1
+  CMD curl -f http://localhost:3000/api/health || ps aux | grep -v grep | grep node || exit 1
 
 # Volumes for persistent data
 VOLUME ["/config", "/data"]

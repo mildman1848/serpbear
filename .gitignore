@@ -1,0 +1,179 @@
+# ---------------------------------------------------------------------------
+# Standard .gitignore for LinuxServer.io based Docker Projects
+# Template Version: 2.4.0
+# ---------------------------------------------------------------------------
+
+# Runtime Environment
+.env
+.env.local
+.env.production
+
+# Runtime Data Directories (standardized)
+config/
+data/
+logs/
+db/
+
+# Secrets and Sensitive Information
+secrets/
+*.key
+*.pem
+*.p12
+*.pfx
+*_rsa
+*_rsa.pub
+.ssh/
+credentials/
+
+# Development and Testing
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+test-data/
+test-volumes/
+coverage/
+.nyc_output/
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+out/
+*.log
+*.tmp
+*.temp
+
+# Docker artifacts
+.docker/
+docker-compose.override.yml.bak
+
+# Operating System
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Archives
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Security scanning reports
+security-reports/
+trivy-results.sarif
+*.sarif
+
+# Baseimage testing (2025-09-25)
+BASEIMAGE_UPDATE_REPORT.md
+baseimage-test-*.log
+baseimage-test-*.json
+
+# CodeQL analysis
+codeql-db/
+codeql-results.csv
+
+# CI/CD artifacts
+.github/workflows/*.backup
+*.backup
+*.bak
+
+# Runtime logs and debugging
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Application specific (customize for your application)
+# Add your application-specific ignore patterns below this line
+
+# ---------------------------------------------------------------------------
+# End of standard .gitignore
+# Project-specific additions should be added below
+# ---------------------------------------------------------------------------
