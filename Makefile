@@ -180,13 +180,13 @@ test: ## Test the Docker image
 	@echo "Testing serpbear functionality..."
 	@echo "Waiting for services to fully start..."
 	@sleep 10
-	@echo "Checking serpbear binary availability..."
-	@$(DOCKER) exec serpbear-test serpbear version >/dev/null || \
-		(echo "$(RED)✗ serpbear binary not accessible$(NC)"; \
+	@echo "Checking serpbear Node.js process..."
+	@$(DOCKER) exec serpbear-test ps aux | grep -v grep | grep "node server.js" >/dev/null || \
+		(echo "$(RED)✗ serpbear Node.js process not running$(NC)"; \
 		$(DOCKER) logs serpbear-test; \
 		$(DOCKER) stop serpbear-test; \
 		exit 1)
-	@echo "$(GREEN)✓ serpbear binary is working$(NC)"
+	@echo "$(GREEN)✓ serpbear Node.js process is running$(NC)"
 	@echo "Verifying container is running correctly..."
 	@$(DOCKER) inspect serpbear-test >/dev/null || \
 		(echo "$(RED)✗ Container is not running$(NC)"; \

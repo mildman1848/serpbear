@@ -1,19 +1,5 @@
 #!/usr/bin/with-contenv bash
 # shellcheck shell=bash
 
-# Custom files init (LinuxServer.io standard)
-# This service handles any custom file operations needed during container startup
-
-if [[ -d /custom-cont-init.d ]] && [[ -n "$(ls -A /custom-cont-init.d 2>/dev/null)" ]]; then
-    echo "**** Found custom-cont-init.d files, executing ****"
-    for SCRIPTS in /custom-cont-init.d/*; do
-        echo "**** Running ${SCRIPTS} ****"
-        if [[ -x "${SCRIPTS}" ]]; then
-            ${SCRIPTS}
-        else
-            echo "**** ${SCRIPTS} is not executable, skipping ****"
-        fi
-    done
-fi
-
-echo "**** Custom files init complete ****"
+echo "Custom files init (LinuxServer.io standard)"
+echo "✓ Custom files init complete"

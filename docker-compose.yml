@@ -31,9 +31,9 @@ services:
       - SERPBEAR_NO_AUTH=${SERPBEAR_NO_AUTH:-false}
       - HOST=${HOST:-127.0.0.1}
 
-      # Optional: FILE__ prefix secrets support
-      - FILE__SERPBEAR_CONFIG_PASS=/run/secrets/serpbear_config_pass
-      - FILE__SERPBEAR_API_KEY=/run/secrets/serpbear_api_key
+      # Optional: FILE__ prefix secrets support (comment out if not using secrets)
+      # - FILE__SERPBEAR_CONFIG_PASS=/run/secrets/serpbear_config_pass
+      # - FILE__SERPBEAR_API_KEY=/run/secrets/serpbear_api_key
 
       # Serpbear specific environment variables
       - DATABASE_URL=file:/app/data/database/serpbear.db
@@ -48,11 +48,11 @@ services:
       - ${MEDIA_PATH:-./media}:/media
       - ${BACKUP_PATH:-./backup}:/backup
 
-    # Optional: Docker secrets support
-    secrets:
-      - serpbear_config_pass
-      - serpbear_api_key
-      - serpbear_jwt_secret
+    # Optional: Docker secrets support (comment out if not using secrets)
+    # secrets:
+    #   - serpbear_config_pass
+    #   - serpbear_api_key
+    #   - serpbear_jwt_secret
 
     # Health check (process-based for security)
     healthcheck:
@@ -68,14 +68,14 @@ services:
       - "org.opencontainers.image.description=Open Source Search Engine Position Tracking App"
       - "org.opencontainers.image.vendor=Mildman1848"
 
-# Docker secrets (optional)
-secrets:
-  serpbear_config_pass:
-    file: ${SECRETS_PATH:-./secrets}/serpbear_config_pass.txt
-  serpbear_api_key:
-    file: ${SECRETS_PATH:-./secrets}/serpbear_api_key.txt
-  serpbear_jwt_secret:
-    file: ${SECRETS_PATH:-./secrets}/serpbear_jwt_secret.txt
+# Docker secrets (optional - comment out if not using secrets)
+# secrets:
+#   serpbear_config_pass:
+#     file: ${SECRETS_PATH:-./secrets}/serpbear_config_pass.txt
+#   serpbear_api_key:
+#     file: ${SECRETS_PATH:-./secrets}/serpbear_api_key.txt
+#   serpbear_jwt_secret:
+#     file: ${SECRETS_PATH:-./secrets}/serpbear_jwt_secret.txt
 
 # Networks (optional)
 networks:

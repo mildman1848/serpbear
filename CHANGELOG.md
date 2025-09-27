@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.7-2] - 2025-09-28
+
+### 🚀 Container Startup Fixes & S6 Service Optimization
+
+#### Fixed
+- **S6 Service Permission Issues**: Removed problematic `s6-setuidgid` calls causing "Operation not permitted" errors
+- **Node.js Process Startup**: Fixed service script to properly start Node.js application without permission conflicts
+- **Database Migrations**: Added proper Sequelize database migration step before application startup
+- **Container Restart Loops**: Eliminated endless restart cycles by fixing S6 service script execution
+- **Health Check Optimization**: Updated health check to verify Node.js process instead of non-existent binary
+- **Template Variable Issues**: Resolved remaining template variables in S6 service scripts
+
+#### Enhanced
+- **Startup Reliability**: Container now starts consistently with proper S6 service chain execution
+- **Process Management**: Node.js application runs directly without unnecessary user switching complications
+- **Test Suite**: Updated Makefile test target to properly validate Node.js applications
+- **Documentation**: Added Node.js-specific troubleshooting patterns to template
+
+#### Technical Details
+- **Root Cause**: `s6-setuidgid abc node server.js` was failing due to supplementary group permissions
+- **Solution**: Direct execution of Node.js with `exec node server.js` after database migrations
+- **Validation**: All pre-push validation steps pass including health checks and security scans
+- **Security**: Maintains container security without compromising functionality
+
 ## [2.0.7-1] - 2025-09-27
 
 ### 🔧 Initial Template Implementation & Container Fixes

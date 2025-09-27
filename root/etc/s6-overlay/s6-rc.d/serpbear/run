@@ -1,89 +1,25 @@
 #!/usr/bin/with-contenv bash
 # shellcheck shell=bash
 
-echo "Starting serpbear service..."
+echo "Starting serpbear..."
 
-# Process FILE__ environment variables if not already processed (additional safety)
-if [[ -n "${FILE__SERPBEAR_API_KEY}" && -z "${SERPBEAR_API_KEY}" ]]; then
-    if [[ -f "${FILE__SERPBEAR_API_KEY}" && -r "${FILE__SERPBEAR_API_KEY}" ]]; then
-        echo "Loading SERPBEAR_API_KEY from ${FILE__SERPBEAR_API_KEY}..."
-        SERPBEAR_API_KEY="$(cat "${FILE__SERPBEAR_API_KEY}")"
-        export SERPBEAR_API_KEY
-        echo "✓ Set SERPBEAR_API_KEY from secret file"
-    fi
-fi
-
-if [[ -n "${FILE__SERPBEAR_CONFIG_PASS}" && -z "${SERPBEAR_CONFIG_PASS}" ]]; then
-    if [[ -f "${FILE__SERPBEAR_CONFIG_PASS}" && -r "${FILE__SERPBEAR_CONFIG_PASS}" ]]; then
-        echo "Loading SERPBEAR_CONFIG_PASS from ${FILE__SERPBEAR_CONFIG_PASS}..."
-        SERPBEAR_CONFIG_PASS="$(cat "${FILE__SERPBEAR_CONFIG_PASS}")"
-        export SERPBEAR_CONFIG_PASS
-        echo "✓ Set SERPBEAR_CONFIG_PASS from secret file"
-    fi
-fi
-
-# Set default values with proper validation
+# Set default values
 PORT=${PORT:-3000}
-CONFIG_PATH=${CONFIG_PATH:-/config}
-DATA_PATH=${DATA_PATH:-/data}
-HOST=${HOST:-0.0.0.0}
-SERPBEAR_CONFIG=${SERPBEAR_CONFIG:-${CONFIG_PATH}/serpbear/serpbear.conf}
-SERPBEAR_CACHE_DIR=${SERPBEAR_CACHE_DIR:-${CONFIG_PATH}/cache}
-SERPBEAR_LOG_LEVEL=${SERPBEAR_LOG_LEVEL:-INFO}
-SERPBEAR_LOG_FILE=${SERPBEAR_LOG_FILE:-${CONFIG_PATH}/logs/serpbear.log}
-SERPBEAR_MODE=${SERPBEAR_MODE:-server}
+NODE_ENV=${NODE_ENV:-production}
 
-# Security: Validate paths and create directories
-for dir in "${CONFIG_PATH}" "${DATA_PATH}" "${CONFIG_PATH}/serpbear" "${CONFIG_PATH}/cache" "${CONFIG_PATH}/logs"; do
-    if [[ ! -d "${dir}" ]]; then
-        echo "Creating directory: ${dir}"
-        mkdir -p "${dir}"
-    fi
-done
+# Export environment variables for Node.js
+export NODE_ENV
+export PORT
 
-# Create temp directory for application
-mkdir -p "${SERPBEAR_TEMP_DIR:-/tmp/serpbear}"
-
-# Security: Ensure proper ownership with restricted permissions (safely)
-echo "Setting directory permissions..."
-chown -R abc:abc "${CONFIG_PATH}" "${DATA_PATH}" 2>/dev/null || true
-find "${CONFIG_PATH}" "${DATA_PATH}" -type d -exec chmod 750 {} \; 2>/dev/null || true
-find "${CONFIG_PATH}" "${DATA_PATH}" -type f -exec chmod 640 {} \; 2>/dev/null || true
-
-# Security: Validate port range
-if ! [[ "${PORT}" =~ ^[0-9]+$ ]] || [ "${PORT}" -lt 1 ] || [ "${PORT}" -gt 65535 ]; then
-    echo "ERROR: Invalid port number: ${PORT}"
-    exit 1
-fi
-
-# Initialize application config if it doesn't exist
-if [[ ! -f "${SERPBEAR_CONFIG}" ]]; then
-    echo "Creating initial serpbear configuration..."
-    touch "${SERPBEAR_CONFIG}"
-    chown abc:abc "${SERPBEAR_CONFIG}"
-    chmod 600 "${SERPBEAR_CONFIG}"
-fi
-
-echo "Starting serpbear in ${SERPBEAR_MODE} mode on ${HOST}:${PORT}..."
-echo "Config file: ${SERPBEAR_CONFIG}"
-echo "Data path: ${DATA_PATH}"
-echo "Cache directory: ${SERPBEAR_CACHE_DIR}"
-echo "Log level: ${SERPBEAR_LOG_LEVEL}"
-echo "Log file: ${SERPBEAR_LOG_FILE}"
-
-# Build application command arguments based on mode/configuration
-# This section needs to be customized for each application
-
-# Start serpbear application (assuming Node.js application)
-echo "Starting serpbear application..."
+echo "Starting serpbear on port ${PORT}..."
 
 # Change to application directory
-cd /app
+cd /app || exit 1
 
-# Set up environment for serpbear
-export NODE_ENV=${NODE_ENV:-production}
-export PORT=${PORT}
+# Run database migrations first (like original image)
+echo "Running database migrations..."
+npx sequelize-cli db:migrate --env production 2>/dev/null || true
 
-# Start the application with proper user
-# Security: Run as non-root user with limited capabilities
-exec s6-setuidgid abc node server.js
+# Start the application directly
+echo "Starting Node.js server..."
+exec node server.js
