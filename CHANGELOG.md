@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.7-3] - 2025-09-28
+
+### 🔧 Enhanced S6 Service Implementation & Template Integration
+
+#### Enhanced
+- **FILE__ Secrets Processing**: Updated init-secrets service with robust pattern from working projects (audiobookshelf, rclone, tandoor)
+- **Template Variable Resolution**: Fixed remaining template variables in S6 service scripts
+- **Security Validation**: Enhanced path validation and error handling in secrets processing
+- **Legacy Compatibility**: Added backward compatibility with Docker Swarm secrets
+- **Template Best Practices**: Integrated lessons learned into workspace template for future projects
+
+#### Fixed
+- **Init-Secrets Service**: Replaced template-based implementation with proven working pattern
+- **Path Security**: Added robust file path validation to prevent path traversal attacks
+- **Error Handling**: Improved error messages and graceful failure modes
+- **Service Dependencies**: Verified complete S6 service chain functionality
+
+#### Technical Implementation
+- **Pattern Source**: Adopted robust FILE__ processing pattern validated in three working projects
+- **Security Features**: Path validation with regex patterns, content validation, and fallback modes
+- **Template Updates**: Enhanced workspace template with SerpBear lessons learned
+- **Documentation**: Added comprehensive S6 service troubleshooting patterns
+
 ## [2.0.7-2] - 2025-09-28
 
 ### 🚀 Container Startup Fixes & S6 Service Optimization
