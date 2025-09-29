@@ -11,7 +11,7 @@ ARG SOURCE_VERSION="2.0.7"
 FROM ${SOURCE_IMAGE}:${SOURCE_VERSION} AS serpbear_source
 
 # Production stage with Node.js base (LinuxServer.io pattern ohne S6)
-FROM node:22.11.0-alpine3.20
+FROM node:24.1.0-alpine3.20
 
 # Build arguments for metadata
 ARG BUILD_DATE
