@@ -1,0 +1,98 @@
+# syntax=docker/dockerfile:1
+
+# Alternative Node.js-kompatibles Dockerfile für SerpBear
+# Löst Exit Code 139 Probleme durch Eliminierung von S6 Overlay User-Switching Konflikten
+
+# Build arguments for source image
+ARG SOURCE_IMAGE="towfiqi/serpbear"
+ARG SOURCE_VERSION="2.0.7"
+
+# Build stage for serpbear assets
+FROM ${SOURCE_IMAGE}:${SOURCE_VERSION} AS serpbear_source
+
+# Production stage with Node.js base (LinuxServer.io pattern ohne S6)
+FROM node:22.11.0-alpine3.20
+
+# Build arguments for metadata
+ARG BUILD_DATE
+ARG VERSION
+ARG SERPBEAR_VERSION="${SOURCE_VERSION}"
+
+# Metadata labels following LinuxServer.io standards
+LABEL build.version="Mildman1848 version: ${VERSION} Build-date: ${BUILD_DATE}"
+LABEL maintainer="Mildman1848"
+LABEL org.opencontainers.image.title="serpbear"
+LABEL org.opencontainers.image.description="Open Source Search Engine Position Tracking App (Node.js Compatible)"
+LABEL org.opencontainers.image.version="${VERSION}"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+LABEL org.opencontainers.image.authors="Mildman1848"
+LABEL org.opencontainers.image.url="https://serpbear.com"
+LABEL org.opencontainers.image.documentation="https://docs.serpbear.com"
+LABEL org.opencontainers.image.source="https://github.com/Mildman1848/serpbear"
+LABEL org.opencontainers.image.vendor="Mildman1848"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# Build arguments for package versions (flexible versions for compatibility)
+ARG CA_CERTIFICATES_VERSION=""
+ARG CURL_VERSION=""
+
+# Environment variables for serpbear (compatible with LinuxServer.io patterns)
+ENV PUID=911 \
+    PGID=911 \
+    TZ=Etc/UTC \
+    DATABASE_URL="file:/config/serpbear.db" \
+    NEXTAUTH_URL="http://localhost:3000" \
+    NODE_ENV="production" \
+    PORT=3000
+
+# LinuxServer.io compatible user management (without S6)
+RUN \
+  echo "**** create abc user and make folders ****" && \
+  addgroup -g 911 abc && \
+  adduser -D -u 911 -G abc abc && \
+  mkdir -p /app /config /data && \
+  echo "**** install runtime packages ****" && \
+  apk add --no-cache \
+    ca-certificates \
+    curl \
+    sqlite && \
+  echo "**** cleanup ****" && \
+  rm -rf \
+    /tmp/* \
+    /var/cache/apk/* \
+    /var/tmp/*
+
+# Copy application from official image (preserves original Node.js setup)
+COPY --from=serpbear_source --chown=abc:abc /app /app/
+
+# Create startup script that handles configuration
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'echo "🐍 Starting SerpBear with Node.js-compatible configuration..."' >> /app/start.sh && \
+    echo 'echo "📁 Creating configuration directories..."' >> /app/start.sh && \
+    echo 'mkdir -p /config/logs' >> /app/start.sh && \
+    echo 'chown -R abc:abc /config 2>/dev/null || chmod -R 755 /config' >> /app/start.sh && \
+    echo 'echo "📊 Database: ${DATABASE_URL}"' >> /app/start.sh && \
+    echo 'echo "🌐 Starting SerpBear on port ${PORT}..."' >> /app/start.sh && \
+    echo 'cd /app && exec node server.js' >> /app/start.sh && \
+    chmod +x /app/start.sh && \
+    chown abc:abc /app/start.sh
+
+# Switch to non-root user (LinuxServer.io pattern)
+USER abc
+
+# Set working directory
+WORKDIR /app
+
+# Expose port
+EXPOSE 3000
+
+# Health check (simple Node.js process check)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD ps aux | grep -v grep | grep "node server.js" || exit 1
+
+# Volumes for persistent data (LinuxServer.io pattern)
+VOLUME ["/config", "/data"]
+
+# Override Node.js default entrypoint and start directly
+ENTRYPOINT []
+CMD ["/app/start.sh"]

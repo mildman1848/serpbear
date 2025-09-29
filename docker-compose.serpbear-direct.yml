@@ -1,0 +1,37 @@
+---
+# WORKING SOLUTION: Use original SerpBear image directly
+# This avoids all compatibility issues with LinuxServer.io baseimage + Next.js
+
+services:
+  serpbear:
+    image: towfiqi/serpbear:2.0.7
+    container_name: serpbear
+    hostname: serpbear
+    restart: unless-stopped
+
+    # Network configuration
+    ports:
+      - "${EXTERNAL_PORT:-3000}:3000"
+
+    # Environment configuration (SerpBear native variables)
+    environment:
+      - DATABASE_URL=file:/data/serpbear.db
+      - NEXTAUTH_URL=http://localhost:${EXTERNAL_PORT:-3000}
+      - NODE_ENV=production
+
+    # Volume mounts (compatible with original SerpBear structure)
+    volumes:
+      - ${CONFIG_PATH:-./config}:/data
+      - ${LOGS_PATH:-./logs}:/app/logs
+
+    # Health check for SerpBear
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  default:
+    name: serpbear_network

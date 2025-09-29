@@ -8,6 +8,10 @@ BUILD_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 VCS_REF := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 SERPBEAR_VERSION ?= 2.0.7
 
+# Dockerfile selection (allows switching between LinuxServer.io and Node.js approach)
+DOCKERFILE ?= Dockerfile
+# Alternative: DOCKERFILE=Dockerfile.nodejs for Node.js-compatible build
+
 # Platform support for multi-architecture builds
 PLATFORMS = linux/amd64,linux/arm64
 
@@ -40,11 +44,18 @@ help: ## Show this help message
 	@echo "  $(YELLOW)VERSION$(NC)               Version tag (default: $(VERSION))"
 	@echo "  $(YELLOW)SERPBEAR_VERSION$(NC)        serpbear version (default: $(SERPBEAR_VERSION))"
 	@echo "  $(YELLOW)PLATFORMS$(NC)             Target platforms (default: $(PLATFORMS))"
+	@echo "  $(YELLOW)DOCKERFILE$(NC)            Dockerfile to use (default: $(DOCKERFILE))"
+	@echo ""
+	@echo "$(BLUE)Alternative Dockerfile Options:$(NC)"
+	@echo "  $(GREEN)make build-linuxserver$(NC)     Build with LinuxServer.io baseimage (default)"
+	@echo "  $(GREEN)make build-nodejs$(NC)          Build with Node.js-compatible configuration"
+	@echo "  $(GREEN)make build-minimal$(NC)         Build minimal approach using original SerpBear image"
 
 ## Build targets
 build: ## Build Docker image for current platform
-	@echo "$(GREEN)Building Docker image...$(NC)"
+	@echo "$(GREEN)Building Docker image using $(DOCKERFILE)...$(NC)"
 	$(DOCKER) build \
+		--file $(DOCKERFILE) \
 		--build-arg BUILD_DATE="$(BUILD_DATE)" \
 		--build-arg VERSION="$(VERSION)" \
 		--build-arg VCS_REF="$(VCS_REF)" \
@@ -53,6 +64,20 @@ build: ## Build Docker image for current platform
 		--tag $(DOCKER_REPO):latest \
 		.
 	@echo "$(GREEN)Build completed successfully!$(NC)"
+
+build-linuxserver: ## Build with LinuxServer.io baseimage (default approach)
+	@echo "$(BLUE)Building with LinuxServer.io Alpine baseimage...$(NC)"
+	$(MAKE) build DOCKERFILE=Dockerfile
+
+build-nodejs: ## Build with Node.js-compatible configuration (Exit Code 139 fix)
+	@echo "$(BLUE)Building with Node.js-compatible configuration...$(NC)"
+	@echo "$(YELLOW)⚠️  This approach eliminates S6 Overlay to fix Exit Code 139 issues$(NC)"
+	$(MAKE) build DOCKERFILE=Dockerfile.nodejs
+
+build-minimal: ## Build minimal approach using original SerpBear image directly
+	@echo "$(BLUE)Building with minimal direct approach...$(NC)"
+	@echo "$(GREEN)✓ This approach uses the original working SerpBear image directly$(NC)"
+	$(MAKE) build DOCKERFILE=Dockerfile.minimal
 
 build-multiarch: ## Build multi-architecture Docker image
 	@echo "$(GREEN)Building multi-architecture Docker image...$(NC)"

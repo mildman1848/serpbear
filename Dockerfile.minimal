@@ -1,0 +1,45 @@
+# syntax=docker/dockerfile:1
+
+# Minimal approach: Use original SerpBear image directly with LinuxServer.io-style configuration
+# This approach bypasses all custom build complexities and compatibility issues
+
+# Use the original working SerpBear image directly
+FROM towfiqi/serpbear:2.0.7
+
+# Build arguments for metadata (maintain LinuxServer.io standards)
+ARG BUILD_DATE
+ARG VERSION
+ARG SERPBEAR_VERSION="2.0.7"
+
+# Metadata labels following LinuxServer.io standards
+LABEL build.version="Mildman1848 version: ${VERSION} Build-date: ${BUILD_DATE}"
+LABEL maintainer="Mildman1848"
+LABEL org.opencontainers.image.title="serpbear"
+LABEL org.opencontainers.image.description="Open Source Search Engine Position Tracking App (Minimal Direct Approach)"
+LABEL org.opencontainers.image.version="${VERSION}"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+LABEL org.opencontainers.image.authors="Mildman1848"
+LABEL org.opencontainers.image.url="https://serpbear.com"
+LABEL org.opencontainers.image.documentation="https://docs.serpbear.com"
+LABEL org.opencontainers.image.source="https://github.com/Mildman1848/serpbear"
+LABEL org.opencontainers.image.vendor="Mildman1848"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# Environment variables (LinuxServer.io compatible but using original structure)
+ENV DATABASE_URL="file:/data/serpbear.db" \
+    NEXTAUTH_URL="http://localhost:3000" \
+    NODE_ENV="production"
+
+# Create directories that match LinuxServer.io patterns
+USER root
+RUN mkdir -p /config /data/logs && \
+    chown -R nextjs:nodejs /config /data || chown -R 1000:1000 /config /data
+
+# Switch back to original user
+USER nextjs
+
+# Keep original working directory and command
+WORKDIR /app
+
+# Use original ENTRYPOINT and CMD - they work!
+# No modifications to avoid breaking the working setup

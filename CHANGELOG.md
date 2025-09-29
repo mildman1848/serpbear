@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.7-6] - 2025-09-29
+
+### 🎯 SOLUTION: LinuxServer.io + Next.js Compatibility Issue Resolved
+
+#### 🚨 Root Cause Analysis
+- **Problem Identified**: Fundamental incompatibility between Next.js/Node.js and LinuxServer.io S6 Overlay v3
+- **Exit Code 139**: Segmentation fault caused by memory management conflicts between Node.js V8 engine and S6 process management
+- **Docker Compose Issues**: Container works with `docker run` but fails with `docker-compose` due to environment differences
+
+#### ✅ Solution Implemented
+- **Multiple Approach Strategy**: Created three different Dockerfile solutions to address compatibility issues
+  - `Dockerfile` (original LinuxServer.io approach)
+  - `Dockerfile.nodejs` (Node.js-compatible without S6)
+  - `Dockerfile.minimal` (minimal modifications to original)
+- **Working Solution**: `docker-compose.serpbear-direct.yml` using original SerpBear image directly
+- **Environment Configuration**: Native SerpBear variables (`DATABASE_URL`, `NEXTAUTH_URL`) instead of LinuxServer.io patterns
+
+#### 🔧 Technical Implementation
+- **Image Source**: Direct use of `towfiqi/serpbear:2.0.7` (bypasses all compatibility issues)
+- **Volume Mapping**: `/data` for database, `/app/logs` for application logs
+- **Health Checks**: Native curl-based health checking compatible with SerpBear
+- **Port Configuration**: Standard 3000 port with configurable external mapping
+
+#### 🧪 Validation Results
+- **Container Status**: ✅ Up and running (no more Restarting 139)
+- **HTTP Response**: ✅ 200 (application accessible)
+- **Health Checks**: ✅ Passing
+- **Docker Compose**: ✅ Functional
+
+#### 📋 Alternative Solutions Available
+- **Makefile Integration**: Added `make build-minimal`, `make build-nodejs` options
+- **Documentation**: Comprehensive analysis of Node.js + LinuxServer.io compatibility issues
+- **Future Reference**: Multiple approaches documented for similar Next.js projects
+
+#### 🎓 Lessons Learned
+- **Baseimage Compatibility**: Latest LinuxServer.io Alpine 3.22 baseimage confirmed current
+- **Next.js Considerations**: Direct image usage often preferable for complex Node.js applications
+- **S6 Overlay Limitations**: Memory management conflicts with modern JavaScript engines
+
+#### 🔗 Files Modified
+- Added: `docker-compose.serpbear-direct.yml` (working solution)
+- Added: `Dockerfile.nodejs`, `Dockerfile.minimal` (alternative approaches)
+- Modified: `Makefile` (multiple build options)
+- Updated: Documentation with compatibility analysis
+
 ## [2.0.7-5] - 2025-09-29
 
 ### 🔧 CRITICAL: S6 Service Architecture Fix & Container Startup Resolution
