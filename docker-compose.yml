@@ -1,0 +1,80 @@
+---
+services:
+  serpbear:
+    image: ${IMAGE_NAME:-mildman1848/serpbear}:${IMAGE_TAG:-latest}
+    container_name: serpbear
+    hostname: serpbear
+    restart: unless-stopped
+
+    # Basic security (enhanced security in docker-compose.override.yml)
+
+    # Network configuration
+    ports:
+      - "${EXTERNAL_PORT:-3000}:3000"
+
+    # Environment configuration
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
+      - UMASK=${UMASK:-022}
+
+      # serpbear specific environment variables
+      - SERPBEAR_MODE=${SERPBEAR_MODE:-server}
+      - SERPBEAR_CONFIG=/config/serpbear/serpbear.conf
+      - SERPBEAR_CACHE_DIR=/config/cache
+      - SERPBEAR_TEMP_DIR=/tmp/serpbear
+      - SERPBEAR_LOG_LEVEL=${SERPBEAR_LOG_LEVEL:-INFO}
+      - SERPBEAR_LOG_FILE=/config/logs/serpbear.log
+
+      # Security configuration
+      - SERPBEAR_NO_AUTH=${SERPBEAR_NO_AUTH:-false}
+      - HOST=${HOST:-127.0.0.1}
+
+      # FILE__ prefix secrets support
+      - FILE__NEXTAUTH_SECRET=/run/secrets/serpbear_jwt_secret
+      - FILE__DATABASE_KEY=/run/secrets/serpbear_config_pass
+      - FILE__API_KEY=/run/secrets/serpbear_api_key
+
+      # Serpbear specific environment variables
+      - DATABASE_URL=file:/config/serpbear.db
+      - NEXTAUTH_URL=http://localhost:3000
+
+    # Volume mounts (simplified for development)
+    volumes:
+      - ${CONFIG_PATH:-./config}:/config
+
+    # Docker secrets support (commented out for development)
+    # secrets:
+    #   - serpbear_config_pass
+    #   - serpbear_api_key
+    #   - serpbear_jwt_secret
+
+    # Health check (process-based for security)
+    healthcheck:
+      test: ["CMD", "sh", "-c", "ps aux | grep -v grep | grep 'node server.js' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Labels for better organization
+    labels:
+      - "org.opencontainers.image.title=serpbear"
+      - "org.opencontainers.image.description=Open Source Search Engine Position Tracking App"
+      - "org.opencontainers.image.vendor=Mildman1848"
+
+# Docker secrets (commented out for development)
+# secrets:
+#   serpbear_config_pass:
+#     file: ${SECRETS_PATH:-./secrets}/serpbear_config_pass.txt
+#   serpbear_api_key:
+#     file: ${SECRETS_PATH:-./secrets}/serpbear_api_key.txt
+#   serpbear_jwt_secret:
+#     file: ${SECRETS_PATH:-./secrets}/serpbear_jwt_secret.txt
+
+# Networks (optional)
+networks:
+  default:
+    name: serpbear_network
+    driver: bridge

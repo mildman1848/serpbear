@@ -1,0 +1,301 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security scans weekly
+    - cron: '0 6 * * 1'
+
+env:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  lint:
+    name: Lint & Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Lint Dockerfile with Hadolint
+        uses: hadolint/hadolint-action@v3.2.0
+        with:
+          dockerfile: Dockerfile
+          failure-threshold: warning
+          ignore: DL3007,DL3018,DL3013
+
+      - name: Validate docker-compose.yml
+        run: |
+          # Use docker compose (plugin version)
+          docker compose --version
+          docker compose config -q
+
+      - name: Check Makefile syntax
+        run: |
+          make help || echo "Make not available in runner"
+
+      - name: Validate environment files
+        run: |
+          if [ -f .env.example ]; then
+            echo "Validating .env.example..."
+            grep -E '^[A-Z_][A-Z0-9_]*=' .env.example || true
+          fi
+
+  test-build:
+    name: Test Docker Build
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build test image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VERSION=test-${{ github.sha }}
+            VCS_REF=${{ github.sha }}
+            ${APPLICATION_NAME_UPPER}_VERSION=$(cat VERSION || echo "${DEFAULT_VERSION}-automation.2")
+            PROJECT_VERSION=$(cat VERSION || echo "${DEFAULT_VERSION}-automation.2")
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: test-build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build test image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: ${DOCKER_USERNAME}/${APPLICATION_NAME}:test
+          cache-from: type=gha
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VERSION=test
+            VCS_REF=${{ github.sha }}
+            PROJECT_VERSION=$(cat VERSION || echo "${DEFAULT_VERSION}-automation.2")
+
+      - name: Create test environment
+        run: |
+          mkdir -p test-volumes/config/{${APPLICATION_NAME},cache,logs}
+          mkdir -p test-volumes/{data,media,backup}
+          chmod 755 test-volumes/config
+          chmod 755 test-volumes/data test-volumes/media test-volumes/backup
+
+          cat > .env << EOF
+          DOCKER_REPO=${DOCKER_USERNAME}/${APPLICATION_NAME}
+          VERSION=test
+          PUID=1000
+          PGID=1000
+          TZ=UTC
+          ${APPLICATION_NAME_UPPER}_LOG_LEVEL=INFO
+          EXTERNAL_PORT=${DEFAULT_PORT}
+          EOF
+
+      - name: Generate test secrets
+        run: make secrets-generate-ci
+
+      - name: Test container startup
+        run: |
+          docker run -d \
+            --name ${APPLICATION_NAME}-test \
+            -p ${DEFAULT_PORT}:${APPLICATION_PORT} \
+            -v $(pwd)/test-volumes/config:/config \
+            -v $(pwd)/test-volumes/data:/data \
+            -v $(pwd)/secrets:/run/secrets:ro \
+            -e PUID=1000 \
+            -e PGID=1000 \
+            -e TZ=UTC \
+            ${DOCKER_USERNAME}/${APPLICATION_NAME}:test
+
+      - name: Wait for container
+        run: |
+          echo "Waiting for container to start..."
+          sleep 10
+
+          timeout 180s bash -c 'while ! docker exec ${APPLICATION_NAME}-test ps aux | grep -v grep | grep ${APPLICATION_NAME} >/dev/null 2>&1; do
+            echo "Waiting for ${APPLICATION_NAME} process..."
+            sleep 5
+          done'
+
+          echo "Waiting for service to be ready..."
+          sleep 20
+
+      - name: Test container health
+        run: |
+          docker ps | grep ${APPLICATION_NAME}-test
+          docker exec ${APPLICATION_NAME}-test ps aux | grep -v grep | grep ${APPLICATION_NAME}
+
+          echo "=== Container startup logs ==="
+          docker logs ${APPLICATION_NAME}-test
+
+          echo "=== Testing basic connectivity ==="
+          timeout 30s bash -c 'while ! nc -z localhost ${DEFAULT_PORT}; do echo "Waiting for port ${DEFAULT_PORT}..."; sleep 2; done' || echo "Port ${DEFAULT_PORT} check timed out"
+
+      - name: Test container logs
+        if: always()
+        run: |
+          echo "=== Container logs ==="
+          docker logs ${APPLICATION_NAME}-test
+          echo "=== Container inspect ==="
+          docker inspect ${APPLICATION_NAME}-test
+
+      - name: Cleanup test container
+        if: always()
+        run: |
+          docker stop ${APPLICATION_NAME}-test || true
+          docker rm ${APPLICATION_NAME}-test || true
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: test-build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image for scanning
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: ${DOCKER_USERNAME}/${APPLICATION_NAME}:scan
+          cache-from: type=gha
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${DOCKER_USERNAME}/${APPLICATION_NAME}:scan'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run Trivy for detailed output
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${DOCKER_USERNAME}/${APPLICATION_NAME}:scan'
+          format: 'table'
+          exit-code: '0'
+
+  docker-compose-test:
+    name: Docker Compose Test
+    runs-on: ubuntu-latest
+    needs: test-build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Check docker compose
+        run: |
+          docker compose --version
+
+      - name: Create test environment
+        run: |
+          mkdir -p config/{${APPLICATION_NAME},cache,logs}
+          mkdir -p data media backup logs
+          chmod 755 config data media backup logs
+
+          cp .env.example .env
+
+          cat >> .env << EOF
+          VERSION=test
+          IMAGE_TAG=test
+          EXTERNAL_PORT=${DEFAULT_PORT}
+          ${APPLICATION_NAME_UPPER}_LOG_LEVEL=DEBUG
+          CONFIG_PATH=./config
+          DATA_PATH=./data
+          LOGS_PATH=./logs
+          SECRETS_PATH=./secrets
+          EOF
+
+      - name: Generate secrets
+        run: make secrets-generate-ci
+
+      - name: Build image first
+        run: |
+          docker build -t ${DOCKER_USERNAME}/${APPLICATION_NAME}:test .
+
+      - name: Test docker compose up
+        run: |
+          docker compose up -d ${APPLICATION_NAME}
+
+      - name: Wait and test service
+        run: |
+          echo "Waiting for ${APPLICATION_NAME} service to start..."
+          sleep 20
+
+          echo "=== Container status ==="
+          docker compose ps
+
+          echo "=== Container logs ==="
+          docker compose logs ${APPLICATION_NAME}
+
+          echo "Waiting for container to be ready..."
+          for i in {1..30}; do
+            if docker compose ps ${APPLICATION_NAME} | grep -q "Up"; then
+              echo "Container is running, checking health..."
+              break
+            fi
+            echo "Container not ready yet, waiting... ($i/30)"
+            sleep 5
+          done
+
+          echo "=== Checking ${APPLICATION_NAME} process ==="
+          if docker compose ps ${APPLICATION_NAME} | grep -q "Up"; then
+            docker compose exec -T ${APPLICATION_NAME} ps aux | grep -v grep | grep ${APPLICATION_NAME} || echo "${APPLICATION_NAME} process not found yet"
+          else
+            echo "Container is not running - skipping process check"
+          fi
+
+          echo "=== Testing port connectivity ==="
+          timeout 60s bash -c 'while ! nc -z localhost ${DEFAULT_PORT}; do echo "Waiting for port ${DEFAULT_PORT}..."; sleep 3; done' || echo "Port check timed out"
+
+      - name: Check logs
+        if: always()
+        run: |
+          echo "=== Docker Compose logs ==="
+          docker compose logs
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose down -v

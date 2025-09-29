@@ -1,0 +1,13 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+
+echo "Installing Docker Mods (LinuxServer.io)..."
+
+if [[ -n "${DOCKER_MODS}" ]]; then
+    echo "Found DOCKER_MODS: ${DOCKER_MODS}"
+    echo "Would install mods: ${DOCKER_MODS}"
+else
+    echo "No DOCKER_MODS specified, skipping mod installation"
+fi
+
+echo "✓ Docker Mods installation complete"

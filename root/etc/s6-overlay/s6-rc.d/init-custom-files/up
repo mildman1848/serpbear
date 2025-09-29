@@ -1,0 +1,5 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+
+echo "Custom files init (LinuxServer.io standard)"
+echo "✓ Custom files init complete"

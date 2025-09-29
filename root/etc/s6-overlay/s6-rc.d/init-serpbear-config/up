@@ -1,0 +1,19 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+
+echo "Configuring serpbear..."
+
+# Create basic directories with proper permissions
+mkdir -p /config /data 2>/dev/null || true
+mkdir -p /data/database 2>/dev/null || true
+
+# Ensure proper ownership (safely, with fallback)
+chown -R abc:abc /config /data 2>/dev/null || {
+    echo "Warning: Could not set ownership, ensuring directory is writable..."
+    chmod -R 755 /config /data 2>/dev/null || true
+}
+
+# Ensure database directory has correct permissions
+chmod 755 /data/database 2>/dev/null || true
+
+echo "✓ serpbear configuration complete"

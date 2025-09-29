@@ -1,0 +1,31 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+
+echo "Starting serpbear service..."
+
+# Security: Load secrets safely
+if [[ -f /run/secrets/serpbear_jwt_secret ]]; then
+    echo "Loading JWT secret from Docker secret..."
+    export NEXTAUTH_SECRET="$(cat /run/secrets/serpbear_jwt_secret)"
+fi
+
+if [[ -f /run/secrets/serpbear_api_key ]]; then
+    echo "Loading API key from Docker secret..."
+    export API_KEY="$(cat /run/secrets/serpbear_api_key)"
+fi
+
+if [[ -f /run/secrets/serpbear_config_pass ]]; then
+    echo "Loading config password from Docker secret..."
+    export DATABASE_KEY="$(cat /run/secrets/serpbear_config_pass)"
+fi
+
+echo "Starting serpbear..."
+
+# Create logs directory if needed
+mkdir -p /config/logs
+
+# Change ownership of config to abc user (best effort)
+chown -R abc:abc /config 2>/dev/null || chmod -R 755 /config
+
+# Change to application directory and start as root (workaround for permission issues)
+cd /app && exec node server.js

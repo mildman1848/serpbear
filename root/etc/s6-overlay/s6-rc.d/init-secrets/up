@@ -1,0 +1,71 @@
+#!/usr/bin/with-contenv bash
+
+echo "Processing secrets..."
+
+# Enhanced FILE__ prefix processing with path validation (from audiobookshelf/rclone pattern)
+process_file_env() {
+    local file_var file_path env_name
+    while IFS='=' read -r name value; do
+        if [[ "$name" =~ ^FILE__(.+)$ ]]; then
+            env_name="${BASH_REMATCH[1]}"
+            file_path="$value"
+
+            # Security: Validate file path (prevent path traversal)
+            if [[ ! "$file_path" =~ ^[a-zA-Z0-9/_.-]+$ ]]; then
+                echo "⚠ Warning: Invalid file path format: $file_path (for $env_name)"
+                continue
+            fi
+
+            if [[ -f "$file_path" && -r "$file_path" ]]; then
+                echo "Processing FILE__ variable: $name -> $env_name"
+                if file_content="$(cat "$file_path" 2>/dev/null)"; then
+                    export "$env_name"="$file_content"
+                    echo "✓ Set $env_name from $file_path"
+                else
+                    echo "⚠ Warning: Could not read secret file: $file_path"
+                fi
+            else
+                echo "⚠ Warning: Secret file not found or not readable: $file_path (for $env_name)"
+            fi
+        fi
+    done < <(env | grep '^FILE__' || true)
+}
+
+# Process FILE__ prefixed environment variables
+process_file_env
+
+# Legacy Docker Secrets support (backward compatibility)
+SECRETS_DIR="/run/secrets"
+if [[ -d "$SECRETS_DIR" ]]; then
+    echo "Processing legacy Docker secrets from $SECRETS_DIR..."
+
+    # Process known serpbear secrets
+    declare -A SERPBEAR_SECRETS=(
+        ["serpbear_nextauth_secret"]="NEXTAUTH_SECRET"
+        ["serpbear_database_key"]="DATABASE_KEY"
+        ["serpbear_api_key"]="API_KEY"
+        ["serpbear_config_pass"]="SERPBEAR_CONFIG_PASS"
+        ["serpbear_jwt_secret"]="JWT_SECRET"
+    )
+
+    for secret_file in "${!SERPBEAR_SECRETS[@]}"; do
+        secret_path="$SECRETS_DIR/$secret_file"
+        env_var="${SERPBEAR_SECRETS[$secret_file]}"
+
+        if [[ -f "$secret_path" && -r "$secret_path" ]]; then
+            if [[ -z "${!env_var}" ]]; then  # Only set if not already set by FILE__
+                echo "Processing legacy secret: $secret_file -> $env_var"
+                if secret_content="$(cat "$secret_path" 2>/dev/null)"; then
+                    export "$env_var"="$secret_content"
+                    echo "✓ Set $env_var from legacy secret"
+                else
+                    echo "⚠ Warning: Could not read legacy secret: $secret_path"
+                fi
+            else
+                echo "↪ Skipping $secret_file (already set via FILE__ prefix)"
+            fi
+        fi
+    done
+fi
+
+echo "✓ Secrets processing complete"
