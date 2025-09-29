@@ -1,25 +1,23 @@
 ---
-# Security hardening override (automatically applied by docker-compose)
-# This file provides comprehensive security hardening for all Mildman1848 containers
-# Based on Docker Security Best Practices and LinuxServer.io standards
+# Security hardening override - SerpBear/Node.js compatible version
+# This file provides security hardening optimized for Next.js/Node.js applications
+# Based on Docker Security Best Practices with LinuxServer.io S6 compatibility
 
 services:
   serpbear:
-    # Enhanced security options
-    security_opt:
-      - no-new-privileges:true
-      - apparmor=docker-default
-      - seccomp=./security/seccomp-profile.json
+    # IMPORTANT: Security restrictions relaxed for Node.js/Next.js compatibility
+    #
+    # REASON: LinuxServer.io S6 Overlay + Node.js applications have fundamental
+    # incompatibilities with Docker security hardening features:
+    # - no-new-privileges conflicts with S6 process management
+    # - capability restrictions prevent S6 user switching
+    # - seccomp profiles block Node.js syscalls
+    # - tmpfs /run restrictions break S6 initialization
+    #
+    # TRADE-OFF: Functional LinuxServer.io container vs. maximum security hardening
+    # Node.js applications in S6 environment require relaxed security to function
 
-    # Comprehensive capability management
-    cap_drop:
-      - ALL
-    cap_add:
-      - SETGID      # User switching (LinuxServer.io requirement)
-      - SETUID      # User switching (LinuxServer.io requirement)
-      - CHOWN       # File ownership management
-      - DAC_OVERRIDE # File access (minimal)
-      - FOWNER      # File ownership operations
+    # Only essential security features that don't break S6/Node.js compatibility:
 
     # Resource limits for security and stability
     deploy:
@@ -32,11 +30,12 @@ services:
           cpus: '0.25'
           memory: 128M
 
-    # tmpfs mounts for security (prevents disk writes to sensitive areas)
+    # tmpfs mounts for security (Node.js compatible)
+    # /run excluded for S6 overlay compatibility
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=100m
       - /var/tmp:rw,noexec,nosuid,size=50m
-      - /run:rw,noexec,nosuid,size=50m
+      # /run excluded: S6 overlay requires full control for process management
 
     # Enhanced logging for security monitoring
     logging:

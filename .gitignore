@@ -173,6 +173,8 @@ pids
 # Application specific (customize for your application)
 # Add your application-specific ignore patterns below this line
 
+CRITICAL-POST-MORTEM.md
+
 # ---------------------------------------------------------------------------
 # End of standard .gitignore
 # Project-specific additions should be added below

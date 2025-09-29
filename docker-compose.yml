@@ -37,12 +37,13 @@ services:
       - FILE__API_KEY=/run/secrets/serpbear_api_key
 
       # Serpbear specific environment variables
-      - DATABASE_URL=file:/config/serpbear.db
+      - DATABASE_URL=${DATABASE_URL:-file:/data/database/serpbear.db}
       - NEXTAUTH_URL=http://localhost:3000
 
     # Volume mounts (simplified for development)
     volumes:
       - ${CONFIG_PATH:-./config}:/config
+      - ${DATA_PATH:-./data}:/data
 
     # Docker secrets support (commented out for development)
     # secrets:

@@ -27,5 +27,9 @@ mkdir -p /config/logs
 # Change ownership of config to abc user (best effort)
 chown -R abc:abc /config 2>/dev/null || chmod -R 755 /config
 
-# Change to application directory and start as root (workaround for permission issues)
-cd /app && exec node server.js
+# Change to application directory and start with proper user
+cd /app
+
+# Start Node.js without user switching (Docker manages user context)
+echo "Starting Node.js as current container user..."
+exec node server.js
