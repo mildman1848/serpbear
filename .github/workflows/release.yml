@@ -1,0 +1,253 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Is this a pre-release?'
+        required: false
+        default: false
+        type: boolean
+      draft:
+        description: 'Create as draft release?'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Validate version format
+        id: version
+        run: |
+          version="${{ github.event.inputs.version }}"
+          if [[ ! $version =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*)?$ ]]; then
+            echo "❌ Invalid version format: $version"
+            echo "Expected format: X.Y.Z or X.Y.Z-suffix"
+            exit 1
+          fi
+          echo "✅ Version format valid: $version"
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          if git rev-parse "v$version" >/dev/null 2>&1; then
+            echo "❌ Tag v$version already exists"
+            exit 1
+          fi
+          echo "✅ Tag v$version is available"
+
+      - name: Extract changelog
+        id: changelog
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          if [[ -f "CHANGELOG.md" ]]; then
+            # Extract changelog section for this version
+            changelog=$(awk "/^## \[?$version\]?/ {flag=1; next} /^## / && flag {exit} flag" CHANGELOG.md)
+            if [[ -n "$changelog" ]]; then
+              echo "✅ Found changelog for version $version"
+              # Save changelog to output (properly escaped)
+              {
+                echo 'changelog<<EOF'
+                echo "$changelog"
+                echo 'EOF'
+              } >> $GITHUB_OUTPUT
+            else
+              echo "⚠️ No changelog found for version $version, using generic message"
+              echo "changelog=Release $version" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "⚠️ No CHANGELOG.md found, using generic message"
+            echo "changelog=Release $version" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run pre-release tests
+        run: |
+          echo "Running pre-release validation..."
+
+          # Build and test container
+          if command -v make >/dev/null 2>&1; then
+            make build || exit 1
+            make test || exit 1
+          else
+            echo "⚠️ Make not available, skipping build tests"
+          fi
+
+          # Validate docker-compose configuration
+          docker compose config --quiet || exit 1
+
+          echo "✅ Pre-release validation completed"
+
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: validate
+    permissions:
+      contents: write
+    outputs:
+      release_id: ${{ steps.create.outputs.id }}
+      upload_url: ${{ steps.create.outputs.upload_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Create Git tag
+        run: |
+          version="${{ needs.validate.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$version" -m "Release v$version"
+          git push origin "v$version"
+
+      - name: Create GitHub Release
+        id: create
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.validate.outputs.version }}
+          release_name: serpbear v${{ needs.validate.outputs.version }}
+          body: |
+            # serpbear v${{ needs.validate.outputs.version }}
+
+            ## Changes
+            ${{ needs.validate.outputs.changelog }}
+
+            ## Container Images
+
+            **GitHub Container Registry:**
+            ```bash
+            docker pull ghcr.io/mildman1848/serpbear:${{ needs.validate.outputs.version }}
+            docker pull ghcr.io/mildman1848/serpbear:latest
+            ```
+
+            ## Architecture Support
+            - ✅ AMD64 (Intel/AMD 64-bit)
+            - ✅ ARM64 (Apple Silicon, ARM64 servers)
+
+            ## Quick Start
+            ```bash
+            # Download docker-compose.yml
+            wget https://raw.githubusercontent.com/${{ github.repository_owner }}/serpbear/v${{ needs.validate.outputs.version }}/docker-compose.yml
+
+            # Copy configuration template
+            cp .env.example .env
+
+            # Edit configuration (set PUID/PGID, ports, etc.)
+            nano .env
+
+            # Start container
+            docker-compose up -d
+            ```
+
+            ## Verification
+            - **Container Image:** `docker buildx imagetools inspect ghcr.io/mildman1848/serpbear:${{ needs.validate.outputs.version }}`
+            - **Security:** Scanned with Trivy, CodeQL, and TruffleHog
+
+            ---
+            **Full Documentation:** [README.md](https://github.com/${{ github.repository }}/blob/v${{ needs.validate.outputs.version }}/README.md)
+
+            🤖 Generated with [Claude Code](https://claude.ai/code)
+          draft: ${{ github.event.inputs.draft == 'true' }}
+          prerelease: ${{ github.event.inputs.prerelease == 'true' }}
+
+  trigger-docker-build:
+    name: Trigger Docker Build
+    runs-on: ubuntu-latest
+    needs: [validate, create-release]
+    steps:
+      - name: Trigger Docker Build & Publish workflow
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: workflow } = await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-publish.yml',
+              ref: 'main'
+            });
+            console.log('✅ Triggered Docker Build & Publish workflow');
+
+      - name: Wait for Docker build completion
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Wait for docker build to complete (with timeout)
+            const maxWaitTime = 30 * 60 * 1000; // 30 minutes
+            const startTime = Date.now();
+
+            while (Date.now() - startTime < maxWaitTime) {
+              const { data: runs } = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'docker-publish.yml',
+                per_page: 5
+              });
+
+              const recentRun = runs.workflow_runs.find(run =>
+                run.created_at > new Date(Date.now() - 10 * 60 * 1000).toISOString()
+              );
+
+              if (recentRun) {
+                if (recentRun.status === 'completed') {
+                  if (recentRun.conclusion === 'success') {
+                    console.log('✅ Docker build completed successfully');
+                    return;
+                  } else {
+                    throw new Error('❌ Docker build failed');
+                  }
+                }
+              }
+
+              console.log('🔄 Waiting for Docker build to complete...');
+              await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30 seconds
+            }
+
+            throw new Error('⏰ Docker build timeout');
+
+  release-summary:
+    name: Release Summary
+    runs-on: ubuntu-latest
+    needs: [validate, create-release, trigger-docker-build]
+    if: always()
+    steps:
+      - name: Release Summary
+        run: |
+          echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|---------|----------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Validation | ${{ needs.validate.result }} | Version format, tests, configuration |" >> $GITHUB_STEP_SUMMARY
+          echo "| GitHub Release | ${{ needs.create-release.result }} | Tag creation and release notes |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docker Images | ${{ needs.trigger-docker-build.result }} | Multi-platform container builds |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.create-release.result }}" == "success" ]]; then
+            echo "🔗 **Release:** [serpbear v${{ needs.validate.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ needs.validate.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📦 **Container Images:**" >> $GITHUB_STEP_SUMMARY
+            echo "- \`ghcr.io/mildman1848/serpbear:${{ needs.validate.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Release creation failed - check logs above**" >> $GITHUB_STEP_SUMMARY
+          fi
