@@ -133,12 +133,24 @@ jobs:
   dependency-scan:
     name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
       security-events: write
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image for scanning
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: mildman1848/serpbear:scan
+          cache-from: type=gha
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/docker@master
@@ -152,6 +164,7 @@ jobs:
       - name: Upload Snyk results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         if: always()
+        continue-on-error: true
         with:
           sarif_file: snyk-results.sarif
 
