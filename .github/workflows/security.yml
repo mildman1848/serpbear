@@ -33,19 +33,19 @@ jobs:
         with:
           context: .
           load: true
-          tags: mildman1848/${APPLICATION_NAME}:scan
+          tags: mildman1848/serpbear:scan
           cache-from: type=gha
           build-args: |
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
             VERSION=security-scan
             VCS_REF=${{ github.sha }}
-            ${APPLICATION_NAME_UPPER}_VERSION=${DEFAULT_VERSION}
+            SERPBEAR_VERSION=2.0.7
             PROJECT_VERSION=scan
 
       - name: Run Trivy vulnerability scanner (SARIF)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'mildman1848/${APPLICATION_NAME}:scan'
+          image-ref: 'mildman1848/serpbear:scan'
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH,MEDIUM'
@@ -60,7 +60,7 @@ jobs:
       - name: Run Trivy vulnerability scanner (Table)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'mildman1848/${APPLICATION_NAME}:scan'
+          image-ref: 'mildman1848/serpbear:scan'
           format: 'table'
           severity: 'CRITICAL,HIGH,MEDIUM,LOW'
           exit-code: '0'
@@ -143,7 +143,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          image: mildman1848/${APPLICATION_NAME}:scan
+          image: mildman1848/serpbear:scan
           args: --severity-threshold=high --sarif-file-output=snyk-results.sarif
 
       - name: Upload Snyk results to GitHub Security tab
@@ -171,13 +171,13 @@ jobs:
         with:
           context: .
           load: true
-          tags: mildman1848/${APPLICATION_NAME}:sbom
+          tags: mildman1848/serpbear:sbom
           cache-from: type=gha
 
       - name: Generate SBOM with Syft
         uses: anchore/sbom-action@v0
         with:
-          image: mildman1848/${APPLICATION_NAME}:sbom
+          image: mildman1848/serpbear:sbom
           format: spdx-json
           output-file: /tmp/sbom.spdx.json
 

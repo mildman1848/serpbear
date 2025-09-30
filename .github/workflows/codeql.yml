@@ -1,7 +1,7 @@
 name: CodeQL Security Analysis
 
 on:
-  # CodeQL disabled for ${APPLICATION_NAME} as it uses pre-compiled app from upstream
+  # CodeQL disabled for serpbear as it uses pre-compiled app from upstream
   # push:
   #   branches: [ main, develop ]
   # pull_request:
@@ -33,7 +33,7 @@ jobs:
       matrix:
         # Override automatic language detection by changing the list below
         # Supported languages: 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'swift'
-        language: ${APPLICATION_SPECIFIC_LANGUAGES}
+        language: ['javascript-typescript']
 
     steps:
       - name: Checkout repository
