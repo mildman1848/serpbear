@@ -13,12 +13,13 @@ on:
         type: boolean
 
 env:
-  UPSTREAM_REPO: ${UPSTREAM_REPO}
+  UPSTREAM_REPO: towfiqi/serpbear
   BASEIMAGE_REPO: linuxserver/docker-baseimage-alpine
+  APPLICATION_NAME: serpbear
 
 jobs:
   monitor-upstream:
-    name: Monitor ${APPLICATION_NAME} Updates
+    name: Monitor serpbear Updates
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -31,13 +32,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Check for new ${APPLICATION_NAME} releases
+      - name: Check for new serpbear releases
         id: version-check
         run: |
-          echo "Checking for new releases from ${UPSTREAM_REPO}..."
+          echo "Checking for new releases from ${{ env.UPSTREAM_REPO }}..."
 
           # Get latest release from GitHub API
-          latest_release=$(curl -s "https://api.github.com/repos/${UPSTREAM_REPO}/releases/latest")
+          latest_release=$(curl -s "https://api.github.com/repos/${{ env.UPSTREAM_REPO }}/releases/latest")
           latest_version=$(echo "$latest_release" | jq -r '.tag_name // .name // "unknown"' | sed 's/^v//')
 
           # Extract current version from various possible sources
@@ -48,13 +49,13 @@ jobs:
             current_version=$(cat VERSION | head -1 | tr -d ' \n\r')
           # Try Dockerfile ARG
           elif [[ -f "Dockerfile" ]]; then
-            dockerfile_version=$(grep -E "ARG.*${APPLICATION_NAME_UPPER}_VERSION|ARG.*VERSION" Dockerfile | head -1 | cut -d'=' -f2 | tr -d '"' | tr -d ' \n\r')
+            dockerfile_version=$(grep -E "ARG.*SERPBEAR_VERSION|ARG.*VERSION" Dockerfile | head -1 | cut -d'=' -f2 | tr -d '"' | tr -d ' \n\r')
             if [[ -n "$dockerfile_version" && "$dockerfile_version" != "latest" ]]; then
               current_version="$dockerfile_version"
             fi
           # Try docker-compose.yml or .env.example
           elif [[ -f ".env.example" ]]; then
-            env_version=$(grep -E "${APPLICATION_NAME_UPPER}_VERSION|VERSION" .env.example | head -1 | cut -d'=' -f2 | tr -d ' \n\r')
+            env_version=$(grep -E "SERPBEAR_VERSION|VERSION" .env.example | head -1 | cut -d'=' -f2 | tr -d ' \n\r')
             if [[ -n "$env_version" ]]; then
               current_version="$env_version"
             fi
@@ -105,7 +106,7 @@ jobs:
             });
 
             const recentIssue = issues.find(issue =>
-              issue.title.includes('${APPLICATION_NAME}') &&
+              issue.title.includes('serpbear') &&
               issue.title.includes('${{ steps.version-check.outputs.latest_version }}')
             );
 
@@ -122,10 +123,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const title = '🔔 ${APPLICATION_NAME} ${{ steps.version-check.outputs.latest_version }} Available';
-            const body = `## ${APPLICATION_NAME} Update Available
+            const title = '🔔 serpbear ${{ steps.version-check.outputs.latest_version }} Available';
+            const body = `## serpbear Update Available
 
-            A new version of ${APPLICATION_NAME} is available for update.
+            A new version of serpbear is available for update.
 
             ### Version Information
             - **Current Version:** ${{ steps.version-check.outputs.current_version }}
@@ -147,7 +148,7 @@ jobs:
 
             ### Files to Update
             - [ ] \`VERSION\` file (if exists)
-            - [ ] \`Dockerfile\` (${APPLICATION_NAME_UPPER}_VERSION argument)
+            - [ ] \`Dockerfile\` (SERPBEAR_VERSION argument)
             - [ ] \`.env.example\` (version environment variables)
             - [ ] \`README.md\` and \`README.de.md\` (version references)
             - [ ] \`CHANGELOG.md\` (add new version entry)
@@ -158,7 +159,7 @@ jobs:
             - [ ] Prioritize update if security fixes are included
 
             ---
-            **Upstream Repository:** [${UPSTREAM_REPO}](https://github.com/${UPSTREAM_REPO})
+            **Upstream Repository:** [towfiqi/serpbear](https://github.com/towfiqi/serpbear)
             **Monitoring:** This issue was created automatically by upstream monitoring workflow
             **Next Check:** Monday/Thursday at 6 AM UTC
 
@@ -199,7 +200,7 @@ jobs:
               echo "Current base image version: $current_baseimage"
 
               # Get latest releases from LinuxServer.io baseimage repository
-              latest_releases=$(curl -s "https://api.github.com/repos/${BASEIMAGE_REPO}/releases?per_page=5")
+              latest_releases=$(curl -s "https://api.github.com/repos/${{ env.BASEIMAGE_REPO }}/releases?per_page=5")
               latest_tag=$(echo "$latest_releases" | jq -r '.[0].tag_name // "unknown"')
 
               echo "Latest base image tag: $latest_tag"
@@ -265,7 +266,7 @@ jobs:
               ### Version Information
               - **Current Version:** ${{ steps.baseimage-check.outputs.current_baseimage }}
               - **Latest Version:** ${{ steps.baseimage-check.outputs.latest_baseimage }}
-              - **Repository:** [${BASEIMAGE_REPO}](https://github.com/${BASEIMAGE_REPO})
+              - **Repository:** [linuxserver/docker-baseimage-alpine](https://github.com/linuxserver/docker-baseimage-alpine)
 
               ### Update Process
               - [ ] Review base image changelog for breaking changes
@@ -291,7 +292,7 @@ jobs:
               - Performance optimizations
 
               ---
-              **Base Image Repository:** [${BASEIMAGE_REPO}](https://github.com/${BASEIMAGE_REPO})
+              **Base Image Repository:** [linuxserver/docker-baseimage-alpine](https://github.com/linuxserver/docker-baseimage-alpine)
               **Update Priority:** Medium (unless security-related)
               **Next Check:** Monday/Thursday at 6 AM UTC
               `;
@@ -321,7 +322,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Component | Status | Current | Latest |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|---------|---------|---------|" >> $GITHUB_STEP_SUMMARY
-          echo "| ${APPLICATION_NAME} | ${{ needs.monitor-upstream.result }} | ${{ needs.monitor-upstream.outputs.current_version || 'unknown' }} | ${{ needs.monitor-upstream.outputs.latest_version || 'unknown' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| serpbear | ${{ needs.monitor-upstream.result }} | ${{ needs.monitor-upstream.outputs.current_version || 'unknown' }} | ${{ needs.monitor-upstream.outputs.latest_version || 'unknown' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| LinuxServer.io Base | ${{ needs.monitor-baseimage.result }} | - | - |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
@@ -334,4 +335,4 @@ jobs:
 
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📅 **Next Check:** Monday and Thursday at 6 AM UTC" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 **Upstream:** [${UPSTREAM_REPO}](https://github.com/${UPSTREAM_REPO})" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Upstream:** [towfiqi/serpbear](https://github.com/towfiqi/serpbear)" >> $GITHUB_STEP_SUMMARY
