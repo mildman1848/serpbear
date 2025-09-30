@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: mildman1848/${APPLICATION_NAME}
+  IMAGE_NAME: mildman1848/serpbear
   DOCKER_BUILDKIT: 1
   COMPOSE_DOCKER_CLI_BUILD: 1
 
@@ -78,7 +78,7 @@ jobs:
             BUILD_DATE=${{ github.event.head_commit.timestamp || github.event.release.published_at }}
             VERSION=${{ github.event.release.tag_name || 'dev' }}
             VCS_REF=${{ github.sha }}
-            ${APPLICATION_NAME_UPPER}_VERSION=${{ github.event.release.tag_name || '${DEFAULT_VERSION}' }}
+            SERPBEAR_VERSION=${{ github.event.release.tag_name || '2.0.7' }}
             PROJECT_VERSION=${{ github.event.release.tag_name || 'dev' }}
 
       - name: Export digest
@@ -218,7 +218,7 @@ jobs:
 
       - name: Create release summary
         run: |
-          echo "## ${APPLICATION_NAME} Container Published Successfully 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "## serpbear Container Published Successfully 🎉" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Release Information" >> $GITHUB_STEP_SUMMARY
           echo "- **Version**: ${{ github.event.release.tag_name || 'dev' }}" >> $GITHUB_STEP_SUMMARY

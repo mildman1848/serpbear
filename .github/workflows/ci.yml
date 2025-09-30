@@ -79,8 +79,8 @@ jobs:
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
             VERSION=test-${{ github.sha }}
             VCS_REF=${{ github.sha }}
-            ${APPLICATION_NAME_UPPER}_VERSION=$(cat VERSION || echo "${DEFAULT_VERSION}-automation.2")
-            PROJECT_VERSION=$(cat VERSION || echo "${DEFAULT_VERSION}-automation.2")
+            SERPBEAR_VERSION=$(cat VERSION || echo "2.0.7-automation.2")
+            PROJECT_VERSION=$(cat VERSION || echo "2.0.7-automation.2")
 
   integration-test:
     name: Integration Tests
@@ -98,29 +98,29 @@ jobs:
         with:
           context: .
           load: true
-          tags: ${DOCKER_USERNAME}/${APPLICATION_NAME}:test
+          tags: mildman1848/serpbear:test
           cache-from: type=gha
           build-args: |
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
             VERSION=test
             VCS_REF=${{ github.sha }}
-            PROJECT_VERSION=$(cat VERSION || echo "${DEFAULT_VERSION}-automation.2")
+            PROJECT_VERSION=$(cat VERSION || echo "2.0.7-automation.2")
 
       - name: Create test environment
         run: |
-          mkdir -p test-volumes/config/{${APPLICATION_NAME},cache,logs}
+          mkdir -p test-volumes/config/{serpbear,cache,logs}
           mkdir -p test-volumes/{data,media,backup}
           chmod 755 test-volumes/config
           chmod 755 test-volumes/data test-volumes/media test-volumes/backup
 
           cat > .env << EOF
-          DOCKER_REPO=${DOCKER_USERNAME}/${APPLICATION_NAME}
+          DOCKER_REPO=mildman1848/serpbear
           VERSION=test
           PUID=1000
           PGID=1000
           TZ=UTC
-          ${APPLICATION_NAME_UPPER}_LOG_LEVEL=INFO
-          EXTERNAL_PORT=${DEFAULT_PORT}
+          SERPBEAR_LOG_LEVEL=INFO
+          EXTERNAL_PORT=3000
           EOF
 
       - name: Generate test secrets
@@ -129,23 +129,23 @@ jobs:
       - name: Test container startup
         run: |
           docker run -d \
-            --name ${APPLICATION_NAME}-test \
-            -p ${DEFAULT_PORT}:${APPLICATION_PORT} \
+            --name serpbear-test \
+            -p 3000:3000 \
             -v $(pwd)/test-volumes/config:/config \
             -v $(pwd)/test-volumes/data:/data \
             -v $(pwd)/secrets:/run/secrets:ro \
             -e PUID=1000 \
             -e PGID=1000 \
             -e TZ=UTC \
-            ${DOCKER_USERNAME}/${APPLICATION_NAME}:test
+            mildman1848/serpbear:test
 
       - name: Wait for container
         run: |
           echo "Waiting for container to start..."
           sleep 10
 
-          timeout 180s bash -c 'while ! docker exec ${APPLICATION_NAME}-test ps aux | grep -v grep | grep ${APPLICATION_NAME} >/dev/null 2>&1; do
-            echo "Waiting for ${APPLICATION_NAME} process..."
+          timeout 180s bash -c 'while ! docker exec serpbear-test ps aux | grep -v grep | grep "node server.js" >/dev/null 2>&1; do
+            echo "Waiting for serpbear process..."
             sleep 5
           done'
 
@@ -154,28 +154,28 @@ jobs:
 
       - name: Test container health
         run: |
-          docker ps | grep ${APPLICATION_NAME}-test
-          docker exec ${APPLICATION_NAME}-test ps aux | grep -v grep | grep ${APPLICATION_NAME}
+          docker ps | grep serpbear-test
+          docker exec serpbear-test ps aux | grep -v grep | grep "node server.js"
 
           echo "=== Container startup logs ==="
-          docker logs ${APPLICATION_NAME}-test
+          docker logs serpbear-test
 
           echo "=== Testing basic connectivity ==="
-          timeout 30s bash -c 'while ! nc -z localhost ${DEFAULT_PORT}; do echo "Waiting for port ${DEFAULT_PORT}..."; sleep 2; done' || echo "Port ${DEFAULT_PORT} check timed out"
+          timeout 30s bash -c 'while ! nc -z localhost 3000; do echo "Waiting for port 3000..."; sleep 2; done' || echo "Port 3000 check timed out"
 
       - name: Test container logs
         if: always()
         run: |
           echo "=== Container logs ==="
-          docker logs ${APPLICATION_NAME}-test
+          docker logs serpbear-test
           echo "=== Container inspect ==="
-          docker inspect ${APPLICATION_NAME}-test
+          docker inspect serpbear-test
 
       - name: Cleanup test container
         if: always()
         run: |
-          docker stop ${APPLICATION_NAME}-test || true
-          docker rm ${APPLICATION_NAME}-test || true
+          docker stop serpbear-test || true
+          docker rm serpbear-test || true
 
   security-scan:
     name: Security Scan
@@ -193,13 +193,13 @@ jobs:
         with:
           context: .
           load: true
-          tags: ${DOCKER_USERNAME}/${APPLICATION_NAME}:scan
+          tags: mildman1848/serpbear:scan
           cache-from: type=gha
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${DOCKER_USERNAME}/${APPLICATION_NAME}:scan'
+          image-ref: 'mildman1848/serpbear:scan'
           format: 'sarif'
           output: 'trivy-results.sarif'
 
@@ -212,7 +212,7 @@ jobs:
       - name: Run Trivy for detailed output
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${DOCKER_USERNAME}/${APPLICATION_NAME}:scan'
+          image-ref: 'mildman1848/serpbear:scan'
           format: 'table'
           exit-code: '0'
 
@@ -230,7 +230,7 @@ jobs:
 
       - name: Create test environment
         run: |
-          mkdir -p config/{${APPLICATION_NAME},cache,logs}
+          mkdir -p config/{serpbear,cache,logs}
           mkdir -p data media backup logs
           chmod 755 config data media backup logs
 
@@ -239,8 +239,8 @@ jobs:
           cat >> .env << EOF
           VERSION=test
           IMAGE_TAG=test
-          EXTERNAL_PORT=${DEFAULT_PORT}
-          ${APPLICATION_NAME_UPPER}_LOG_LEVEL=DEBUG
+          EXTERNAL_PORT=3000
+          SERPBEAR_LOG_LEVEL=DEBUG
           CONFIG_PATH=./config
           DATA_PATH=./data
           LOGS_PATH=./logs
@@ -252,26 +252,26 @@ jobs:
 
       - name: Build image first
         run: |
-          docker build -t ${DOCKER_USERNAME}/${APPLICATION_NAME}:test .
+          docker build -t mildman1848/serpbear:test .
 
       - name: Test docker compose up
         run: |
-          docker compose up -d ${APPLICATION_NAME}
+          docker compose up -d serpbear
 
       - name: Wait and test service
         run: |
-          echo "Waiting for ${APPLICATION_NAME} service to start..."
+          echo "Waiting for serpbear service to start..."
           sleep 20
 
           echo "=== Container status ==="
           docker compose ps
 
           echo "=== Container logs ==="
-          docker compose logs ${APPLICATION_NAME}
+          docker compose logs serpbear
 
           echo "Waiting for container to be ready..."
           for i in {1..30}; do
-            if docker compose ps ${APPLICATION_NAME} | grep -q "Up"; then
+            if docker compose ps serpbear | grep -q "Up"; then
               echo "Container is running, checking health..."
               break
             fi
@@ -279,15 +279,15 @@ jobs:
             sleep 5
           done
 
-          echo "=== Checking ${APPLICATION_NAME} process ==="
-          if docker compose ps ${APPLICATION_NAME} | grep -q "Up"; then
-            docker compose exec -T ${APPLICATION_NAME} ps aux | grep -v grep | grep ${APPLICATION_NAME} || echo "${APPLICATION_NAME} process not found yet"
+          echo "=== Checking serpbear process ==="
+          if docker compose ps serpbear | grep -q "Up"; then
+            docker compose exec -T serpbear ps aux | grep -v grep | grep "node server.js" || echo "serpbear process not found yet"
           else
             echo "Container is not running - skipping process check"
           fi
 
           echo "=== Testing port connectivity ==="
-          timeout 60s bash -c 'while ! nc -z localhost ${DEFAULT_PORT}; do echo "Waiting for port ${DEFAULT_PORT}..."; sleep 3; done' || echo "Port check timed out"
+          timeout 60s bash -c 'while ! nc -z localhost 3000; do echo "Waiting for port 3000..."; sleep 3; done' || echo "Port check timed out"
 
       - name: Check logs
         if: always()
