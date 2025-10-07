@@ -111,7 +111,7 @@ jobs:
         with:
           context: .
           load: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/serpbear:test
+          tags: mildman1848/serpbear:test
           cache-from: type=gha
           build-args: |
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
@@ -127,7 +127,7 @@ jobs:
           chmod 755 test-volumes/data test-volumes/media test-volumes/backup
 
           cat > .env << EOF
-          DOCKER_REPO=${{ secrets.DOCKERHUB_USERNAME }}/serpbear
+          DOCKER_REPO=mildman1848/serpbear
           VERSION=test
           PUID=1000
           PGID=1000
@@ -150,7 +150,7 @@ jobs:
             -e PUID=1000 \
             -e PGID=1000 \
             -e TZ=UTC \
-            ${{ secrets.DOCKERHUB_USERNAME }}/serpbear:test
+            mildman1848/serpbear:test
 
       - name: Wait for container
         run: |
@@ -206,13 +206,13 @@ jobs:
         with:
           context: .
           load: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/serpbear:scan
+          tags: mildman1848/serpbear:scan
           cache-from: type=gha
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/serpbear:scan'
+          image-ref: 'mildman1848/serpbear:scan'
           format: 'sarif'
           output: 'trivy-results.sarif'
 
@@ -225,7 +225,7 @@ jobs:
       - name: Run Trivy for detailed output
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/serpbear:scan'
+          image-ref: 'mildman1848/serpbear:scan'
           format: 'table'
           exit-code: '0'
 
@@ -265,7 +265,7 @@ jobs:
 
       - name: Build image first
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/serpbear:test .
+          docker build -t mildman1848/serpbear:test .
 
       - name: Test docker compose up
         run: |
