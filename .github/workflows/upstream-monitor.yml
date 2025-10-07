@@ -15,7 +15,6 @@ on:
 env:
   UPSTREAM_REPO: towfiqi/serpbear
   BASEIMAGE_REPO: linuxserver/docker-baseimage-alpine
-  APPLICATION_NAME: serpbear
 
 jobs:
   monitor-upstream:
@@ -35,10 +34,10 @@ jobs:
       - name: Check for new serpbear releases
         id: version-check
         run: |
-          echo "Checking for new releases from ${{ env.UPSTREAM_REPO }}..."
+          echo "Checking for new releases from towfiqi/serpbear..."
 
           # Get latest release from GitHub API
-          latest_release=$(curl -s "https://api.github.com/repos/${{ env.UPSTREAM_REPO }}/releases/latest")
+          latest_release=$(curl -s "https://api.github.com/repos/towfiqi/serpbear/releases/latest")
           latest_version=$(echo "$latest_release" | jq -r '.tag_name // .name // "unknown"' | sed 's/^v//')
 
           # Extract current version from various possible sources
@@ -200,7 +199,7 @@ jobs:
               echo "Current base image version: $current_baseimage"
 
               # Get latest releases from LinuxServer.io baseimage repository
-              latest_releases=$(curl -s "https://api.github.com/repos/${{ env.BASEIMAGE_REPO }}/releases?per_page=5")
+              latest_releases=$(curl -s "https://api.github.com/repos/${BASEIMAGE_REPO}/releases?per_page=5")
               latest_tag=$(echo "$latest_releases" | jq -r '.[0].tag_name // "unknown"')
 
               echo "Latest base image tag: $latest_tag"
@@ -266,7 +265,7 @@ jobs:
               ### Version Information
               - **Current Version:** ${{ steps.baseimage-check.outputs.current_baseimage }}
               - **Latest Version:** ${{ steps.baseimage-check.outputs.latest_baseimage }}
-              - **Repository:** [linuxserver/docker-baseimage-alpine](https://github.com/linuxserver/docker-baseimage-alpine)
+              - **Repository:** [${BASEIMAGE_REPO}](https://github.com/${BASEIMAGE_REPO})
 
               ### Update Process
               - [ ] Review base image changelog for breaking changes
@@ -292,7 +291,7 @@ jobs:
               - Performance optimizations
 
               ---
-              **Base Image Repository:** [linuxserver/docker-baseimage-alpine](https://github.com/linuxserver/docker-baseimage-alpine)
+              **Base Image Repository:** [${BASEIMAGE_REPO}](https://github.com/${BASEIMAGE_REPO})
               **Update Priority:** Medium (unless security-related)
               **Next Check:** Monday/Thursday at 6 AM UTC
               `;

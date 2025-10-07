@@ -13,6 +13,6 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           echo "Trigger build pipeline"
-          echo "Repository: audiobookshelf"
+          echo "Repository: serpbear"
           echo "Triggered by: ${{ github.actor }}"
           echo "This would trigger the main build process"

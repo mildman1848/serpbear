@@ -134,10 +134,16 @@ jobs:
 
             ## Container Images
 
+            **Docker Hub:**
+            ```bash
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/serpbear:${{ needs.validate.outputs.version }}
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/serpbear:latest
+            ```
+
             **GitHub Container Registry:**
             ```bash
-            docker pull ghcr.io/mildman1848/serpbear:${{ needs.validate.outputs.version }}
-            docker pull ghcr.io/mildman1848/serpbear:latest
+            docker pull ghcr.io/${{ secrets.DOCKERHUB_USERNAME }}/serpbear:${{ needs.validate.outputs.version }}
+            docker pull ghcr.io/${{ secrets.DOCKERHUB_USERNAME }}/serpbear:latest
             ```
 
             ## Architecture Support
@@ -160,7 +166,8 @@ jobs:
             ```
 
             ## Verification
-            - **Container Image:** `docker buildx imagetools inspect ghcr.io/mildman1848/serpbear:${{ needs.validate.outputs.version }}`
+            - **Container Image:** `docker buildx imagetools inspect ${{ secrets.DOCKERHUB_USERNAME }}/serpbear:${{ needs.validate.outputs.version }}`
+            - **SBOM:** Available as release asset
             - **Security:** Scanned with Trivy, CodeQL, and TruffleHog
 
             ---
@@ -184,7 +191,10 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-publish.yml',
-              ref: 'main'
+              ref: 'main',
+              inputs: {
+                tag: '${{ needs.validate.outputs.version }}'
+              }
             });
             console.log('✅ Triggered Docker Build & Publish workflow');
 
@@ -247,7 +257,8 @@ jobs:
             echo "🔗 **Release:** [serpbear v${{ needs.validate.outputs.version }}](https://github.com/${{ github.repository }}/releases/tag/v${{ needs.validate.outputs.version }})" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "📦 **Container Images:**" >> $GITHUB_STEP_SUMMARY
-            echo "- \`ghcr.io/mildman1848/serpbear:${{ needs.validate.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- \`${{ secrets.DOCKERHUB_USERNAME }}/serpbear:${{ needs.validate.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- \`ghcr.io/${{ secrets.DOCKERHUB_USERNAME }}/serpbear:${{ needs.validate.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **Release creation failed - check logs above**" >> $GITHUB_STEP_SUMMARY
           fi

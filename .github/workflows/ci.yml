@@ -31,10 +31,23 @@ jobs:
           failure-threshold: warning
           ignore: DL3007,DL3018,DL3013
 
+      - name: Setup Docker Compose
+        run: |
+          # Add Docker's official GPG key and repository
+          sudo apt-get update
+          sudo apt-get install -y ca-certificates curl gnupg
+          sudo install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          sudo chmod a+r /etc/apt/keyrings/docker.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+          # Install Docker Compose plugin
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
+          docker compose version
+
       - name: Validate docker-compose.yml
         run: |
-          # Use docker compose (plugin version)
-          docker compose --version
           docker compose config -q
 
       - name: Check Makefile syntax
@@ -98,7 +111,7 @@ jobs:
         with:
           context: .
           load: true
-          tags: mildman1848/serpbear:test
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/serpbear:test
           cache-from: type=gha
           build-args: |
             BUILD_DATE=${{ github.event.head_commit.timestamp }}
@@ -114,13 +127,13 @@ jobs:
           chmod 755 test-volumes/data test-volumes/media test-volumes/backup
 
           cat > .env << EOF
-          DOCKER_REPO=mildman1848/serpbear
+          DOCKER_REPO=${{ secrets.DOCKERHUB_USERNAME }}/serpbear
           VERSION=test
           PUID=1000
           PGID=1000
           TZ=UTC
           SERPBEAR_LOG_LEVEL=INFO
-          EXTERNAL_PORT=3000
+          EXTERNAL_PORT=13378
           EOF
 
       - name: Generate test secrets
@@ -130,21 +143,21 @@ jobs:
         run: |
           docker run -d \
             --name serpbear-test \
-            -p 3000:3000 \
+            -p 13378:80 \
             -v $(pwd)/test-volumes/config:/config \
             -v $(pwd)/test-volumes/data:/data \
             -v $(pwd)/secrets:/run/secrets:ro \
             -e PUID=1000 \
             -e PGID=1000 \
             -e TZ=UTC \
-            mildman1848/serpbear:test
+            ${{ secrets.DOCKERHUB_USERNAME }}/serpbear:test
 
       - name: Wait for container
         run: |
           echo "Waiting for container to start..."
           sleep 10
 
-          timeout 180s bash -c 'while ! docker exec serpbear-test ps aux | grep -v grep | grep "node server.js" >/dev/null 2>&1; do
+          timeout 180s bash -c 'while ! docker exec serpbear-test ps aux | grep -v grep | grep serpbear >/dev/null 2>&1; do
             echo "Waiting for serpbear process..."
             sleep 5
           done'
@@ -155,13 +168,13 @@ jobs:
       - name: Test container health
         run: |
           docker ps | grep serpbear-test
-          docker exec serpbear-test ps aux | grep -v grep | grep "node server.js"
+          docker exec serpbear-test ps aux | grep -v grep | grep serpbear
 
           echo "=== Container startup logs ==="
           docker logs serpbear-test
 
           echo "=== Testing basic connectivity ==="
-          timeout 30s bash -c 'while ! nc -z localhost 3000; do echo "Waiting for port 3000..."; sleep 2; done' || echo "Port 3000 check timed out"
+          timeout 30s bash -c 'while ! nc -z localhost 13378; do echo "Waiting for port 13378..."; sleep 2; done' || echo "Port 13378 check timed out"
 
       - name: Test container logs
         if: always()
@@ -193,27 +206,26 @@ jobs:
         with:
           context: .
           load: true
-          tags: mildman1848/serpbear:scan
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/serpbear:scan
           cache-from: type=gha
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'mildman1848/serpbear:scan'
+          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/serpbear:scan'
           format: 'sarif'
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         if: always()
-        continue-on-error: true
         with:
           sarif_file: 'trivy-results.sarif'
 
       - name: Run Trivy for detailed output
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'mildman1848/serpbear:scan'
+          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/serpbear:scan'
           format: 'table'
           exit-code: '0'
 
@@ -240,7 +252,7 @@ jobs:
           cat >> .env << EOF
           VERSION=test
           IMAGE_TAG=test
-          EXTERNAL_PORT=3000
+          EXTERNAL_PORT=13378
           SERPBEAR_LOG_LEVEL=DEBUG
           CONFIG_PATH=./config
           DATA_PATH=./data
@@ -253,7 +265,7 @@ jobs:
 
       - name: Build image first
         run: |
-          docker build -t mildman1848/serpbear:test .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/serpbear:test .
 
       - name: Test docker compose up
         run: |
@@ -282,13 +294,13 @@ jobs:
 
           echo "=== Checking serpbear process ==="
           if docker compose ps serpbear | grep -q "Up"; then
-            docker compose exec -T serpbear ps aux | grep -v grep | grep "node server.js" || echo "serpbear process not found yet"
+            docker compose exec -T serpbear ps aux | grep -v grep | grep serpbear || echo "serpbear process not found yet"
           else
             echo "Container is not running - skipping process check"
           fi
 
           echo "=== Testing port connectivity ==="
-          timeout 60s bash -c 'while ! nc -z localhost 3000; do echo "Waiting for port 3000..."; sleep 3; done' || echo "Port check timed out"
+          timeout 60s bash -c 'while ! nc -z localhost 13378; do echo "Waiting for port 13378..."; sleep 3; done' || echo "Port check timed out"
 
       - name: Check logs
         if: always()

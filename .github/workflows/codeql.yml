@@ -1,7 +1,7 @@
 name: CodeQL Security Analysis
 
 on:
-  # CodeQL disabled for serpbear as it uses pre-compiled app from upstream
+  # CodeQL enabled for serpbear as it uses pre-compiled Node.js app from upstream
   # push:
   #   branches: [ main, develop ]
   # pull_request:
@@ -25,15 +25,8 @@ jobs:
       actions: read
       contents: read
 
-    # Only run manually - CodeQL analysis for pre-compiled app from upstream
+    # Only run manually - CodeQL analysis for pre-compiled Node.js app
     if: github.event_name == 'workflow_dispatch'
-
-    strategy:
-      fail-fast: false
-      matrix:
-        # Override automatic language detection by changing the list below
-        # Supported languages: 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'swift'
-        language: ['javascript-typescript']
 
     steps:
       - name: Checkout repository
@@ -42,7 +35,7 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: ${{ matrix.language }}
+          languages: javascript
           # If you wish to specify custom queries, you can do so here or in a config file.
           # By default, queries listed here will override any specified in a config file.
           # Prefix the list here with "+" to use these queries and those in the config file.
@@ -67,7 +60,7 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
-          category: "/language:${{ matrix.language }}"
+          category: "/language:javascript"
 
       - name: CodeQL Analysis Summary
         if: always()
@@ -76,6 +69,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Language | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|---------|" >> $GITHUB_STEP_SUMMARY
-          echo "| ${{ matrix.language }} | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| javascript | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📊 **View detailed results:** [Security tab](https://github.com/${{ github.repository }}/security/code-scanning)" >> $GITHUB_STEP_SUMMARY
