@@ -131,7 +131,7 @@ jobs:
           touch "/tmp/digests/ghcr/${digest#sha256:}"
 
       - name: Upload digests artifact (Docker Hub)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: digests-docker-${{ steps.platform-name.outputs.platform_pair }}
           path: /tmp/digests/docker/*
@@ -139,7 +139,7 @@ jobs:
           retention-days: 1
 
       - name: Upload digests artifact (GHCR)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: digests-ghcr-${{ steps.platform-name.outputs.platform_pair }}
           path: /tmp/digests/ghcr/*
