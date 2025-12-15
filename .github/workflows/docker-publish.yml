@@ -157,14 +157,14 @@ jobs:
       packages: write
     steps:
       - name: Download digests (Docker Hub)
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           path: /tmp/digests/docker
           pattern: digests-docker-*
           merge-multiple: true
 
       - name: Download digests (GHCR)
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           path: /tmp/digests/ghcr
           pattern: digests-ghcr-*
