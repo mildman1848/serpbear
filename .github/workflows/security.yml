@@ -43,7 +43,7 @@ jobs:
             PROJECT_VERSION=scan
 
       - name: Run Trivy vulnerability scanner (SARIF)
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.34.0
         with:
           image-ref: 'mildman1848/serpbear:scan'
           format: 'sarif'
@@ -59,7 +59,7 @@ jobs:
           category: 'trivy-container'
 
       - name: Run Trivy vulnerability scanner (Table)
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.34.0
         with:
           image-ref: 'mildman1848/serpbear:scan'
           format: 'table'
@@ -67,7 +67,7 @@ jobs:
           exit-code: '0'
 
       - name: Run Trivy filesystem scan
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.34.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
