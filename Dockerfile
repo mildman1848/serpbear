@@ -8,7 +8,7 @@ ARG SOURCE_VERSION="2.0.7"
 FROM ${SOURCE_IMAGE}:${SOURCE_VERSION} AS serpbear
 
 # Production stage with LinuxServer.io Alpine baseimage
-FROM ghcr.io/linuxserver/baseimage-alpine:3.22-a0dc0735-ls11
+FROM ghcr.io/linuxserver/baseimage-alpine:3.23-48fea208-ls9
 
 # Build arguments for metadata
 ARG BUILD_DATE

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Updated the LinuxServer.io Alpine base image to the current `3.23` release line.
+- Updated the alternative Node.js base image from `22.11.0-alpine3.20` to `22.16.0-alpine3.22`.
+- Kept the upstream SerpBear application source at `2.0.7` for now to avoid an unreviewed major-version jump.
+
 ## [2.0.7-7] - 2025-09-29
 
 ### 🎉 FINAL SOLUTION: Complete LinuxServer.io S6 + Node.js Integration Success
