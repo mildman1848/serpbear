@@ -361,13 +361,27 @@ jobs:
             *This issue was created automatically on ${new Date().toISOString().split('T')[0]}*
             `;
 
-            await github.rest.issues.create({
+            const { data: issues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: title,
-              body: body,
-              labels: ['security', 'audit', 'automated', 'high-priority']
+              state: 'open',
+              labels: 'security,audit,automated'
             });
+
+            const existingIssue = issues.find(issue => issue.title === title);
+
+            if (!existingIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['security', 'audit', 'automated', 'high-priority']
+              });
+              console.log('✅ Created security audit issue');
+            } else {
+              console.log('ℹ️ Security audit issue already exists');
+            }
 
   baseimage-check:
     name: Check Base Image Updates

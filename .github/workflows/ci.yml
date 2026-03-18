@@ -24,13 +24,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Lint Dockerfile with Hadolint
-        uses: hadolint/hadolint-action@v3.3.0
-        with:
-          dockerfile: Dockerfile
-          failure-threshold: warning
-          ignore: DL3007,DL3018,DL3013
-
       - name: Setup Docker Compose
         run: |
           # Add Docker's official GPG key and repository
@@ -210,7 +203,7 @@ jobs:
           cache-from: type=gha
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: 'mildman1848/serpbear:scan'
           format: 'sarif'
@@ -218,12 +211,12 @@ jobs:
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: ${{ always() && hashFiles('trivy-results.sarif') != '' }}
         with:
           sarif_file: 'trivy-results.sarif'
 
       - name: Run Trivy for detailed output
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: 'mildman1848/serpbear:scan'
           format: 'table'

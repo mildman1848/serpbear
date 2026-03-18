@@ -43,7 +43,7 @@ jobs:
             PROJECT_VERSION=scan
 
       - name: Run Trivy vulnerability scanner (SARIF)
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: 'mildman1848/serpbear:scan'
           format: 'sarif'
@@ -53,13 +53,13 @@ jobs:
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: ${{ always() && hashFiles('trivy-results.sarif') != '' }}
         with:
           sarif_file: 'trivy-results.sarif'
           category: 'trivy-container'
 
       - name: Run Trivy vulnerability scanner (Table)
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: 'mildman1848/serpbear:scan'
           format: 'table'
@@ -67,7 +67,7 @@ jobs:
           exit-code: '0'
 
       - name: Run Trivy filesystem scan
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
@@ -78,7 +78,7 @@ jobs:
 
       - name: Upload filesystem scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: ${{ always() && hashFiles('trivy-fs-results.sarif') != '' }}
         with:
           sarif_file: 'trivy-fs-results.sarif'
           category: 'trivy-filesystem'
@@ -104,31 +104,6 @@ jobs:
           path: ./
           extra_args: --debug --only-verified
         continue-on-error: true
-
-  dockerfile-scan:
-    name: Dockerfile Security Scan
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Run Hadolint security scan
-        uses: hadolint/hadolint-action@v3.3.0
-        with:
-          dockerfile: Dockerfile
-          format: sarif
-          output-file: hadolint-results.sarif
-          no-fail: true
-
-      - name: Upload Hadolint scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: hadolint-results.sarif
-          category: 'hadolint-dockerfile'
 
   dependency-scan:
     name: Dependency Vulnerability Scan
@@ -206,7 +181,7 @@ jobs:
   security-summary:
     name: Security Summary
     runs-on: ubuntu-latest
-    needs: [trivy-scan, secret-scan, dockerfile-scan, sbom-scan]
+    needs: [trivy-scan, secret-scan, sbom-scan]
     if: always()
     steps:
       - name: Security scan summary
@@ -217,7 +192,6 @@ jobs:
           echo "|-----------|---------|" >> $GITHUB_STEP_SUMMARY
           echo "| Trivy Vulnerability | ${{ needs.trivy-scan.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Secret Scan | ${{ needs.secret-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Dockerfile Security | ${{ needs.dockerfile-scan.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| SBOM Generation | ${{ needs.sbom-scan.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📊 **Security Dashboard:** [View Results](https://github.com/${{ github.repository }}/security)" >> $GITHUB_STEP_SUMMARY

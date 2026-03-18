@@ -1,6 +1,6 @@
 # SerpBear Docker Image
 
-> 📖 **[Deutsche Version](README.de.md)** | 🇬🇧 **English Version**
+> 📖 **[Deutsche Version](README.DE.md)** | 🇬🇧 **English Version**
 
 ![Build Status](https://github.com/mildman1848/serpbear/workflows/CI/badge.svg)
 ![Security Scan](https://github.com/mildman1848/serpbear/workflows/Security%20Scan/badge.svg)
