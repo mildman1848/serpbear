@@ -38,6 +38,7 @@ ENV SERPBEAR_CONFIG="/config/serpbear/serpbear.conf" \
     SERPBEAR_APP_VERSION="${SERPBEAR_VERSION}"
 
 # Install dependencies and serpbear
+# hadolint ignore=DL3018
 RUN \
   echo "**** install runtime packages ****" && \
   apk add --no-cache \
