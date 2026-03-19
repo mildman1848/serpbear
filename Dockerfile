@@ -13,7 +13,7 @@ FROM ghcr.io/linuxserver/baseimage-alpine:3.23-48fea208-ls9
 # Build arguments for metadata
 ARG BUILD_DATE
 ARG VERSION
-ARG SERPBEAR_VERSION="${SOURCE_VERSION}"
+ARG SERPBEAR_VERSION="2.0.7"
 
 # Metadata labels following LinuxServer.io standards
 LABEL build.version="Mildman1848 version: ${VERSION} Build-date: ${BUILD_DATE}"
