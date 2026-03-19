@@ -32,7 +32,7 @@ jobs:
           - linux/arm64
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -131,7 +131,7 @@ jobs:
           touch "/tmp/digests/ghcr/${digest#sha256:}"
 
       - name: Upload digests artifact (Docker Hub)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: digests-docker-${{ steps.platform-name.outputs.platform_pair }}
           path: /tmp/digests/docker/*
@@ -139,7 +139,7 @@ jobs:
           retention-days: 1
 
       - name: Upload digests artifact (GHCR)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: digests-ghcr-${{ steps.platform-name.outputs.platform_pair }}
           path: /tmp/digests/ghcr/*
@@ -157,14 +157,14 @@ jobs:
       packages: write
     steps:
       - name: Download digests (Docker Hub)
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           path: /tmp/digests/docker
           pattern: digests-docker-*
           merge-multiple: true
 
       - name: Download digests (GHCR)
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           path: /tmp/digests/ghcr
           pattern: digests-ghcr-*
@@ -309,7 +309,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3

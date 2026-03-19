@@ -72,7 +72,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Check for GitHub Actions updates
         id: actions-check
@@ -92,8 +92,8 @@ jobs:
             while IFS= read -r file; do
               if [[ -f "$file" ]]; then
                 # Check for specific patterns that commonly need updates
-                if grep -q "actions/checkout@v4" "$file"; then
-                  outdated_actions+="$file: actions/checkout@v4 (consider upgrading to v5)\n"
+                if grep -q "actions/checkout@v5" "$file"; then
+                  outdated_actions+="$file: actions/checkout@v5 (consider upgrading to v6)\n"
                 fi
                 if grep -q "actions/setup-node@v3" "$file"; then
                   outdated_actions+="$file: actions/setup-node@v3 (consider upgrading to v4)\n"
@@ -292,7 +292,7 @@ jobs:
       issues: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run comprehensive security scan
         run: |
@@ -393,7 +393,7 @@ jobs:
       issues: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Check LinuxServer.io base image updates
         id: baseimage
