@@ -33,7 +33,7 @@ ENV DATABASE_URL="file:/data/serpbear.db" \
 # Create directories that match LinuxServer.io patterns
 USER root
 RUN mkdir -p /config /data/logs && \
-    chown -R nextjs:nodejs /config /data || chown -R 1000:1000 /config /data
+    if ! chown -R nextjs:nodejs /config /data; then chown -R 1000:1000 /config /data; fi
 
 # Switch back to original user
 USER nextjs
