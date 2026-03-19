@@ -66,6 +66,7 @@ RUN \
 COPY --from=serpbear_source --chown=abc:abc /app /app/
 
 # Create startup script that handles configuration
+# hadolint ignore=SC2016
 RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'echo "🐍 Starting SerpBear with Node.js-compatible configuration..."' >> /app/start.sh && \
     echo 'echo "📁 Creating configuration directories..."' >> /app/start.sh && \
