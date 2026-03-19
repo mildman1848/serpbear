@@ -29,12 +29,6 @@ LABEL org.opencontainers.image.source="https://github.com/Mildman1848/serpbear"
 LABEL org.opencontainers.image.vendor="Mildman1848"
 LABEL org.opencontainers.image.licenses="MIT"
 
-# Build arguments for package versions
-ARG CA_CERTIFICATES_VERSION="20250619-r0"
-ARG CURL_VERSION="8.14.1-r1"
-ARG UNZIP_VERSION="6.0-r15"
-ARG NODEJS_VERSION="22.16.0-r2"
-
 # Environment variables for serpbear
 ENV SERPBEAR_CONFIG="/config/serpbear/serpbear.conf" \
     SERPBEAR_CACHE_DIR="/config/cache" \
@@ -47,11 +41,11 @@ ENV SERPBEAR_CONFIG="/config/serpbear/serpbear.conf" \
 RUN \
   echo "**** install runtime packages ****" && \
   apk add --no-cache \
-    ca-certificates=${CA_CERTIFICATES_VERSION} \
-    curl=${CURL_VERSION} \
-    nodejs=${NODEJS_VERSION} \
+    ca-certificates \
+    curl \
+    nodejs \
     npm \
-    unzip=${UNZIP_VERSION} && \
+    unzip && \
   echo "**** install serpbear ****" && \
   mkdir -p /app && \
   echo "**** cleanup ****" && \
