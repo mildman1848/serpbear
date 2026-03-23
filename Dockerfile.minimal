@@ -4,7 +4,7 @@
 # This approach bypasses all custom build complexities and compatibility issues
 
 # Use the original working SerpBear image directly
-FROM towfiqi/serpbear:2.0.7
+FROM towfiqi/serpbear:3.0.0
 
 # Build arguments for metadata (maintain LinuxServer.io standards)
 ARG BUILD_DATE
