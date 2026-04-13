@@ -144,7 +144,7 @@ jobs:
 
       - name: Create maintenance issue if needed
         if: steps.actions-check.outputs.outdated_found == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -212,7 +212,7 @@ jobs:
       actions: write
     steps:
       - name: Delete old workflow runs
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -251,7 +251,7 @@ jobs:
             }
 
       - name: Delete old artifacts
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -326,7 +326,7 @@ jobs:
 
       - name: Create security audit issue if needed
         if: env.security_issues_found == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

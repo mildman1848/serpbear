@@ -183,7 +183,7 @@ jobs:
     needs: [validate, create-release]
     steps:
       - name: Trigger Docker Build & Publish workflow
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -199,7 +199,7 @@ jobs:
             console.log('✅ Triggered Docker Build & Publish workflow');
 
       - name: Wait for Docker build completion
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
