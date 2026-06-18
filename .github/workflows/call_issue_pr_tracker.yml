@@ -2,9 +2,9 @@ name: Issue/PR Tracker
 
 on:
   issues:
-    types: [opened, reopened, labeled, closed]
+    types: [opened, reopened, labeled]
   pull_request_target:
-    types: [opened, reopened, labeled, closed, synchronize]
+    types: [opened, reopened, labeled, synchronize]
 
 jobs:
   issue-pr-tracker:
