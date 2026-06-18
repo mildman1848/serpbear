@@ -170,8 +170,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: title,
-              body: body,
-              labels: ['upstream', 'update', 'enhancement', 'automated']
+              body: body
             });
 
             console.log(`✅ Created update issue: ${issue.html_url}`);
@@ -243,6 +242,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const baseimageRepo = process.env.BASEIMAGE_REPO || 'linuxserver/docker-baseimage-alpine';
+
             // Check for existing base image update issues
             const { data: issues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -265,7 +266,7 @@ jobs:
               ### Version Information
               - **Current Version:** ${{ steps.baseimage-check.outputs.current_baseimage }}
               - **Latest Version:** ${{ steps.baseimage-check.outputs.latest_baseimage }}
-              - **Repository:** [${BASEIMAGE_REPO}](https://github.com/${BASEIMAGE_REPO})
+              - **Repository:** [${baseimageRepo}](https://github.com/${baseimageRepo})
 
               ### Update Process
               - [ ] Review base image changelog for breaking changes
@@ -291,7 +292,7 @@ jobs:
               - Performance optimizations
 
               ---
-              **Base Image Repository:** [${BASEIMAGE_REPO}](https://github.com/${BASEIMAGE_REPO})
+              **Base Image Repository:** [${baseimageRepo}](https://github.com/${baseimageRepo})
               **Update Priority:** Medium (unless security-related)
               **Next Check:** Monday/Thursday at 6 AM UTC
               `;
@@ -300,8 +301,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: title,
-                body: body,
-                labels: ['maintenance', 'update', 'automated']
+                body: body
               });
 
               console.log('✅ Created base image update issue');
