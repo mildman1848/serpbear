@@ -73,7 +73,7 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=5 \
-    CMD ${APPLICATION_SPECIFIC_HEALTH_CHECK} || exit 1
+    CMD ["sh", "-c", "${APPLICATION_SPECIFIC_HEALTH_CHECK} || exit 1"]
 
 # Set working directory
 WORKDIR /app
