@@ -198,7 +198,7 @@ jobs:
               echo "Current base image version: $current_baseimage"
 
               # Get latest releases from LinuxServer.io baseimage repository
-              latest_releases=$(curl -fsSL -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${ process.env.BASEIMAGE_REPO }/releases?per_page=5" || echo '[]')
+              latest_releases=$(curl -fsSL -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${BASEIMAGE_REPO}/releases?per_page=5" || echo '[]')
               latest_tag=$(echo "$latest_releases" | jq -r 'if type == "array" and length > 0 then .[0].tag_name else "unknown" end' 2>/dev/null || echo "unknown")
 
               echo "Latest base image tag: $latest_tag"
