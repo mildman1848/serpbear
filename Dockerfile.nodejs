@@ -89,7 +89,7 @@ EXPOSE 3000
 
 # Health check (simple Node.js process check)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD ps aux | grep -v grep | grep "node server.js" || exit 1
+  CMD ["sh", "-c", "ps aux | grep -v grep | grep \"node server.js\" || exit 1"]
 
 # Volumes for persistent data (LinuxServer.io pattern)
 VOLUME ["/config", "/data"]
